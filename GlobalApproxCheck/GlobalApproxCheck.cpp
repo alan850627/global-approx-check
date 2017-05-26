@@ -8,6 +8,7 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/Analysis/CallGraph.h"
 #include <vector>
 #include <map>
 #include <utility>
@@ -18,12 +19,14 @@ namespace {
 	struct GlobalApproxCheck : public ModulePass {
 		static char ID;
 		GlobalApproxCheck() : ModulePass(ID) {}
-		
+
 		/*
 		* Main Pass
 		*/
 		virtual bool runOnModule(Module &M) {
 			errs() << "\n===================" << "Module " << M.getName() << "===================\n\n";
+			CallGraph cg = CallGraph(M);
+			cg.dump();
 			return false;
 		};
 	};
