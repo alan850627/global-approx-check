@@ -1,5 +1,4 @@
-# Check instruction dependence on memory
-
+# Global Approx Check
 
 ### Build the pass:
 
