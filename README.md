@@ -1,29 +1,25 @@
-# README #
+# Check instruction dependence on memory
 
-This README would normally document whatever steps are necessary to get your application up and running.
 
-### What is this repository for? ###
+### Build the pass:
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+    $ mkdir build
+    $ cd build
+    $ cmake ..
+    $ make
+    $ cd ..
 
-### How do I get set up? ###
+### compile the test
+    $ clang test.c -o test
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+### to run test
+    $ ./test
 
-### Contribution guidelines ###
+### build IR
+    $ clang -O0 -emit-llvm test.c -c -o test.bc
 
-* Writing tests
-* Code review
-* Other guidelines
+### look at LLVM IR
+    $ llvm-dis < test.bc | less
 
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+### run the pass
+    $ opt -load build/GlobalApproxCheck/libGlobalApproxCheck.so -GlobalApproxCheck -disable-output test.bc
