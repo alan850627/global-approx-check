@@ -13,12 +13,22 @@
 #include <map>
 #include <utility>
 #include <string>
+#include <iostream>
 using namespace llvm;
 
 namespace {
 	struct GlobalApproxCheck : public ModulePass {
 		static char ID;
 		GlobalApproxCheck() : ModulePass(ID) {}
+
+		// Global Variables
+		int cycle_count = 0;
+
+
+		/*
+		* Run num cycles
+		*/
+		
 
 		/*
 		* Main Pass
