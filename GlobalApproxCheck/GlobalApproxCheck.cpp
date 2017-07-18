@@ -28,7 +28,12 @@ namespace {
 		/*
 		* Run num cycles
 		*/
-		
+		void pause(Value* vi) {
+			if (cycle_count == 0) {
+				cin >> cycle_count;
+			}
+			cycle_count -= 1;
+		}
 
 		/*
 		* Main Pass
