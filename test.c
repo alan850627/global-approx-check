@@ -5,43 +5,43 @@ void foo(int* x) {
 
 int main() {
 	int x = 4; //*
-	char[] s = "hello world"; //*
+	char s[] = "hello world"; //*
 	foo (&x);
 	return s[x]; //*
 }
 
 // Test 2
-int b(int x) { //*
+int b1(int x) { //*
 	int z = 3;
-	char[] s = "hello world"
+	char s[] = "hello world";
 	z = z + s[x]; //*
 	return z;
 }
 
-int a() {
+int a1() {
 	int x = 1; //*
 	int y = 2; //*
 	x = y + 5; //*
-	int z = b(x);
+	int z = b1(x);
 	return y; //*
 }
 
 // Test 3
-int c(int z) { //*
+int c2(int z) { //*
 	z++; //*
 	return z; //*
 }
-int b(int x) {  //*
+int b2(int x) {  //*
 	int z = 3;  //*
-	char[] s = "hello world"
-	int q = c(z) + s[x];  //*
+	char s[] = "hello world";
+	int q = c2(z) + s[x];  //*
 	return s[q];
 }
 
-int a() {
-	char[] s = "hello world";
+int a2() {
+	char s[] = "hello world";
 	int x = 1; //*
 	int y = 2; //*
-	int z = b(x);
+	int z = b2(x);
 	return x + y;
 }

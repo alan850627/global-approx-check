@@ -30,7 +30,7 @@ namespace {
 		*/
 		void pause(Value* vi) {
 			if (cycle_count == 0) {
-				cin >> cycle_count;
+				std::cin >> cycle_count;
 			}
 			cycle_count -= 1;
 		}
