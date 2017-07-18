@@ -1,0 +1,54 @@
+1) need to figure out approx info independent of function calls.
+    (The parts of the program that doesn't include the function call within the program call.)
+    (All the paths that are not intercepted by the function call)
+	i) Locate all the load-stores.
+	ii) From the address of load-stores, work backwards (use-def chain) and mark parent instructions as nonapproxable.
+		If we hit a function call, mark the 'return' of that child function as not approxable.
+	iii) Repeat until another load or alloca. Store the address of that load and alloca instructions in a critical-address list.
+	iv) Find all instructions that have same operands as the instructions in the critical-address list.
+	v) Look at the def-use chain of those instructions.
+	vi) Repeat until end or store instruction.
+		if we hit a function call, we need to go into the child function.
+	vii) if store, look at the address of that store instruction. If this address is in the critical-address list,
+		mark all instructions that lead to the store as nonapproxable (those instructions modify the address)
+
+2) Need to figure out if the inputs of the callee function is approxable or not
+  i) Use the callgraph, go one level deeper into the callee function.
+  ii) Repeat 1) on the function we are on now.
+
+3) Repeat 2) until we are at a leaf-function.
+4) Since the alloca instructions correspond to function inputs and local variables, we use the approxability of those instructions
+  to track whether an input of a function is approxable or not.
+5) As we go back up the call chain, pass the alloca information up to the parent.
+  i) Now in the caller function, traverse use-def chain and mark parent instructions as nonapproxable.
+    If we hit a function call, mark the 'return' of that child function as not approxable.
+  ii) Repeat until alloca.
+6) Repeat 5) until we're back on the top.
+7) Finish marking all the instructions at the top now we have more information about callee functions:
+  i) From the callee functions, traverse use-def chain and mark parent instructions as nonapproxable.
+  ii) If we hit a function call, mark the 'return' of that child function as not approxable.
+  iii) Repeat until another load or alloca. Store the address of that load and alloca instructions in a critical-address list.
+	iv) Find all instructions that have same operands as the instructions in the critical-address list.
+	v) Look at the def-use chain of those instructions.
+	vi) Repeat until end or store instruction.
+		if we hit a function call, we need to go into the child function.
+	vii) if store, look at the address of that store instruction. If this address is in the critical-address list,
+		mark all instructions that lead to the store as nonapproxable (those instructions modify the address)
+
+8) Now we've finished marking the instructions in the top level function.
+9) Repeat 1) on callee(s).
+10) If at any point the alloca status (input operands) of callee changes, we need to repeat 7) on parent.
+11) Repeat 9) until leaf function is complete.
+
+
+
+void foo(int* x) {
+	*x = 1+1; //this addition cannot be approximated
+}
+
+int main() {
+	int x = 4;
+	char[] s = "hello world";
+	foo (&x);
+	return s[x];
+}

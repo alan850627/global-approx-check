@@ -1,0 +1,21 @@
+(A) To 'completely' determine approxability of a (ONE) function:
+NOTE: This assumes that we know the approxability of ret instruction. 
+1) need to figure out approx info independent of function calls.
+    (The parts of the program that doesn't include the function call within the program call.)
+    (All the paths that are not intercepted by the function call)
+2) need to figure out if the inputs of the function is approxable or not. 
+    (by going one level deeper into the function call)
+3) repeat 1) and 2) IN that function until we're at a leaf-function.
+4) Pass approxability of the inputs to the caller function.
+5) Mark more instructions using additional information from callee.
+6) If backward propagation (use-def chain) ends at the input, then mark input and do 4) in caller function.
+7) Repeat all these until we get back to level 1.
+
+(B) // Repeat (A) for child functions. 
+1) Using info from parent, pass in approxability info of ret instruction.
+2) Backward propagate and mark instructions starting from load-stores and ret. (the load-store part should be already done from (A))
+3) Whenever an instruction gets marked, we need to backward-propagate and mark more instructions.
+note: if we hit an instruction while backward-propagating, that means the ret instruction of that callee cannot be approx.
+
+TODO: Make call graph examples and run (A) and (B) by hand.
+TODO: Think about double recursive functions. 

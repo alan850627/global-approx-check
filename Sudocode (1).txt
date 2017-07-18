@@ -1,0 +1,66 @@
+
+(A) // Go through each function. TODO: How to traverse through call graph?
+1. Locate all instructions that have addresses and put them in a list.
+	If there's a function call, we need to figure out if the input operands can be approximated or not. (Go to D)
+2. Look at the use-def chain of critical operands.
+3. If see load: go to (B),
+	if see call to a function, go to (C)
+	otherwise:
+4. Mark the instruction as cannot be approximated and look at the use-def chain of all the operands of this instruction.
+5. Repeat 3) until reach the def.
+6. Now we have a list of where addresses are stored (from B, in the form of an instruction that calculates that address)
+	We need to check if these addresses are being operated on.
+7. Look for all instructions that have the same operands as those instructions stored in the list.
+	This checks that two instructions calculate to the same address that stores the critical data.
+8. Look at the def-use chain of those instructions
+9. If we see a store instruction, go to (E)
+	If we see a call to a function, go to (F)
+	Otherwise, continue
+10. Repeat 8) until there are no more uses.
+11. Now we've marked all instructions that cannot be approximated in the function.
+
+
+(B) // The address is stored in memory.
+1. Get the instruction that calculates the address the load instruction is loading from, put this instruction in a list
+   (This list is a list of where addresses are stored in memory).
+2. Go back to (A.2)
+
+
+(C) // Need to check which input modify the output of the being called function
+1. Look at def-use chain of the instruction
+2. If the chain ends in a load/store/control and it's crucial (address), then mark input as not-approxable.
+3. If the chain ends in another call to a function, recursively do (C).
+4. If the function has no other calls to other functions, the function chain should me marked with which input modify the output.
+	Return to (A.2)
+NOTE: This needs to take care of whether if the operands are pointers...etc.
+
+
+(D) // Need to determine if the inputs to a function can be approximated.
+1. Identify which allocates are inputs
+2. Check def-use chain.
+3. If load, store, or control, check if use is 'critical'. If it is, that input is not approximate-able.
+	If input of function call, go to (D).
+	(We don't really care if the input modify output here)
+
+
+(E) // Check if we're updating the critical data.
+1. Get the instruction that calculates the address of the store instruction that's being storing to.
+2. Compare this instruction with the instructions in the critical data list made in (B).
+3. If the instruction is not in the address list, go to (A.8), and look at the next instruction on the list.
+	If the instruction is in the critical data list, continue. That means we're modifying the critical data, therefore all instructions before this needs to be marked.
+4. From the store instruction, find the use-def chain of the data operand until the load, and mark all those instructions as not approximate-able.
+5. Go back to A.8.
+
+
+(F) // Critical data is being passed into a function.
+1. Check if the output of the function depends on the input, if not, the chain stops.
+2. We also need to check if the critical data is being modified using pass by reference or pointer.
+3. Go into the function, and
+4. Look for all instructions that have the same operands as those instructions stored in the list.
+	This checks that two instructions calculate to the same address that stores the critical data.
+5. Look at the def-use chain of those instructions
+6. If we see a store instruction, go to (E)
+	If we see a call to a function, go to (F)
+	Otherwise, continue
+7. Repeat 5) until there are no more uses.
+8. Go back to where we came from. (Probably A.8)
