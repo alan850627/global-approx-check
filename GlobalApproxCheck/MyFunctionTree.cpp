@@ -1,5 +1,5 @@
-#ifndef MYFUNCTIONTREE_CPP
-#define MYFUNCTIONTREE_CPP
+#ifndef MYFUNCTIONTREE_H
+#define MYFUNCTIONTREE_H
 
 class MyFunctionTree {
 

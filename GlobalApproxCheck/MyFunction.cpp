@@ -1,5 +1,5 @@
-#ifndef MYFUNCTION_CPP
-#define MYFUNCTION_CPP
+#ifndef MYFUNCTION_H
+#define MYFUNCTION_H
 
 #include "llvm/IR/Function.h"
 

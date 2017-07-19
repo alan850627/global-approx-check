@@ -10,9 +10,7 @@
 
 // TODO: Get this cleaner
 #include "MyTypes.h"
-#include "MyInstruction.cpp"
-#include "MyFunction.cpp"
-#include "MyFunctionTree.cpp"
+#include "MyInstruction.h"
 
 #include <vector>
 #include <map>
