@@ -8,6 +8,14 @@
     $ make
     $ cd ..
 
+    or
+
+    $ mkdir build
+    $ cd build
+    $ cmake ..
+    $ cd ..
+    $ make
+
 ### compile the test
     $ clang test.c -o test
 
@@ -22,3 +30,7 @@
 
 ### run the pass
     $ opt -load build/GlobalApproxCheck/libGlobalApproxCheck.so -GlobalApproxCheck -disable-output test.bc
+
+    or
+
+    $ opt -load GlobalApproxCheck/libGlobalApproxCheck.so -GlobalApproxCheck -disable-output test.bc

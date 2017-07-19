@@ -6,6 +6,12 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/IR/InstIterator.h"
+
+// TODO: Get this cleaner
+#include "MyTypes.h"
+#include "MyInstruction.cpp"
+
 #include <vector>
 #include <map>
 #include <utility>
@@ -38,7 +44,19 @@ namespace {
 		virtual bool runOnModule(Module &M) {
 			errs() << "\n===================" << "Module " << M.getName() << "===================\n\n";
 			CallGraph cg = CallGraph(M);
-			cg.dump();
+			// cg.dump();
+
+
+			// Test
+			CallGraphNode* cgn = cg.getExternalCallingNode();
+			cgn = (*cgn)[2];
+			Function* func = cgn->getFunction();
+			for (inst_iterator I = inst_begin(func); I != inst_end(func); I++) {
+				MyInstruction i(&*I);
+				i.print();
+			}
+
+
 			return false;
 		};
 	};
