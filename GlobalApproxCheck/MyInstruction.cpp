@@ -1,3 +1,6 @@
+#ifndef MYINSTRUCTION_CPP
+#define MYINSTRUCTION_CPP
+
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
@@ -80,3 +83,5 @@ public:
 		errs() << "Hello World\n";
 	}
 };
+
+#endif

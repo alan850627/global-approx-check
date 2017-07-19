@@ -11,6 +11,8 @@
 // TODO: Get this cleaner
 #include "MyTypes.h"
 #include "MyInstruction.cpp"
+#include "MyFunction.cpp"
+#include "MyFunctionTree.cpp"
 
 #include <vector>
 #include <map>

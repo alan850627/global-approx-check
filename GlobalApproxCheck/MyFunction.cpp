@@ -1,6 +1,11 @@
+#ifndef MYFUNCTION_CPP
+#define MYFUNCTION_CPP
+
 #include "llvm/IR/Function.h"
-#include "MyInstruction.h"
+
+#include "MyInstruction.cpp"
 #include "MyTypes.h"
+
 #include <vector>
 #include <utility>
 using namespace llvm;
@@ -16,10 +21,12 @@ public:
 	}
 
 private:
-	initializeArguments() {
-		
+	void initializeArguments() {
+
 	}
 
 
 
-}
+};
+
+#endif
