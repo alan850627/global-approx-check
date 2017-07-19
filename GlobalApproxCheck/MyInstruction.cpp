@@ -1,7 +1,9 @@
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
 #include "MyTypes.h"
 #include <vector>
+#include <string>
 using namespace llvm;
 
 class MyInstruction {
