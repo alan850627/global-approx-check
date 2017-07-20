@@ -23,6 +23,19 @@ public:
     initializeArguments();
   }
 
+  MyFunction(const MyFunction& copy_from) {
+    root = copy_from.root;
+    args = copy_from.args;
+    myInsts = copy_from.myInsts;
+  }
+
+  MyFunction& operator=(const MyFunction& copy_from) {
+    root = copy_from.root;
+    args = copy_from.args;
+    myInsts = copy_from.myInsts;
+		return *this;
+	}
+
 private:
   void initializeArguments() {
     args.clear();

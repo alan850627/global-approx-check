@@ -15,6 +15,12 @@ class MyInstruction {
 public:
 	Value* root;
 	ApproxStatus approxStatus;
+
+	MyInstruction () {
+		root = 0;
+		approxStatus = ApproxStatus::pending;
+	}
+
 	MyInstruction(Instruction* in) {
 		root = (Value*)in;
 		approxStatus = ApproxStatus::pending;
@@ -45,6 +51,21 @@ public:
 			i = dyn_cast<Instruction>(root);
 		}
 		return i;
+	}
+
+	bool equals(MyInstruction comp) {
+		// TODO
+		return false;
+	}
+
+	bool equals_deep(MyInstruction comp) {
+		// TODO
+		return false;
+	}
+
+	MyInstruction getAddressDependency() {
+		// TODO
+		return MyInstruction();
 	}
 
 	std::vector<MyInstruction> getUseDef() {
@@ -81,7 +102,17 @@ public:
 	}
 
 	void print() {
-		errs() << *root << "\n";
+		switch (approxStatus) {
+			case ApproxStatus::approxable:
+				errs() << "//Instruction:" << *root << " //Status: " << "Approxable\n";
+				break;
+			case ApproxStatus::nonApproxable:
+				errs() << "//Instruction:" << *root << " //Status: " << "Not Approxable\n";
+				break;
+			case ApproxStatus::pending:
+				errs() << "//Instruction:" << *root << " //Status: " << "Pending\n";
+				break;
+		}
 	}
 };
 
