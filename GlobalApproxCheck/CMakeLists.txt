@@ -1,7 +1,6 @@
 add_library(GlobalApproxCheck MODULE
     # List your source files here.
     GlobalApproxCheck.cpp
-    MyInstruction.cpp
 )
 
 
