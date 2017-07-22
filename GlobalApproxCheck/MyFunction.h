@@ -3,6 +3,7 @@
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "MyInstruction.h"
 #include "MyTypes.h"
@@ -14,41 +15,70 @@ using namespace llvm;
 class MyFunction {
 public:
   Function* root;
-  std::vector<std::pair<MyInstruction, ApproxStatus>> args;
-  std::vector<MyInstruction> myInsts;
+  std::vector<MyInstruction> args;
+  std::vector<MyInstruction> insts;
+  std::string name;
 
   MyFunction(Function* fun) {
     root = fun;
+    name = std::string(fun.getName());
     initializeInstructions();
     initializeArguments();
   }
 
   MyFunction(const MyFunction& copy_from) {
     root = copy_from.root;
+    name = std::string(copy_from.getName());
     args = copy_from.args;
-    myInsts = copy_from.myInsts;
+    insts = copy_from.insts;
   }
 
   MyFunction& operator=(const MyFunction& copy_from) {
     root = copy_from.root;
+    name = std::string(copy_from.getName());
     args = copy_from.args;
-    myInsts = copy_from.myInsts;
+    insts = copy_from.insts;
 		return *this;
 	}
+
+  void markRet() {
+    for (inst : insts) {
+      if (inst.getOpcodeName() == "ret") {
+        inst.markAsNonApprox();
+      }
+    }
+  }
+
+  void print() {
+    errs() << "Function Name: " << name << "\n\n";
+    errs() << "Arguments:\n"
+    for (arg : args) {
+      arg.print();
+    }
+    errs() << "\nInstructions:\n"
+    for (inst : insts) {
+      inst.print();
+    }
+    errs() << "\n"
+  }
+
+  void printSimple() {
+    errs() << "Function: " << name << "\n";
+  }
 
 private:
   void initializeArguments() {
     args.clear();
     const int NUM_ARGS = (root->arg_end() - root->arg_begin());
     for (int i = 0; i < NUM_ARGS; i++) {
-			args.push_back(std::make_pair(myInsts[i], ApproxStatus::pending));
+			args.push_back(insts[i]);
     }
   }
 
   void initializeInstructions() {
-    myInsts.clear();
+    insts.clear();
     for (inst_iterator ii = inst_begin(*root); ii != inst_end(*root); ii++) {
-      myInsts.push_back(MyInstruction(&*ii));;
+      insts.push_back(MyInstruction(&*ii));;
     }
   }
 

@@ -5,8 +5,10 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/raw_ostream.h"
+
 #include "MyTypes.h"
 #include "MyInstruction.h"
+
 #include <vector>
 #include <string>
 using namespace llvm;
@@ -15,30 +17,36 @@ class MyInstruction {
 public:
 	Value* root;
 	ApproxStatus approxStatus;
+	bool propagated;
 
 	MyInstruction () {
 		root = 0;
 		approxStatus = ApproxStatus::pending;
+		propagated = false;
 	}
 
 	MyInstruction(Instruction* in) {
 		root = (Value*)in;
 		approxStatus = ApproxStatus::pending;
+		propagated = false;
 	}
 
 	MyInstruction(Value* in) {
 		root = in;
 		approxStatus = ApproxStatus::pending;
+		propagated = false;
 	}
 
 	MyInstruction(const MyInstruction& copy_from) {
 		root = copy_from.root;
 		approxStatus = copy_from.approxStatus;
+		propagated = copy_from.propagated;
 	}
 
 	MyInstruction& operator=(const MyInstruction& copy_from) {
 		root = copy_from.root;
 		approxStatus = copy_from.approxStatus;
+		propagated = copy_from.propagated;
 		return *this;
 	}
 
@@ -111,6 +119,10 @@ public:
 	}
 
 	void markAsNonApprox() {
+		if (approxStatus == ApproxStatus::nonApproxable) {
+			return;
+		}
+		propagated = false;
 		approxStatus = ApproxStatus::nonApproxable;
 		Instruction* instr = getInstruction();
 		if (instr != 0) {
@@ -126,7 +138,7 @@ public:
 				errs() << "//Instruction:" << *root << " //Status: " << "Approxable\n";
 				break;
 			case ApproxStatus::nonApproxable:
-				errs() << "//Instruction:" << *root << " //Status: " << "Not Approxable\n";
+				errs() << "//Instruction:" << *root << " //Status: " << "Not Approxable //Propagated: " << propagated << "\n";
 				break;
 			case ApproxStatus::pending:
 				errs() << "//Instruction:" << *root << " //Status: " << "Pending\n";

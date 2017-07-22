@@ -11,6 +11,7 @@
 #include "MyTypes.h"
 #include "MyInstruction.h"
 #include "MyFunction.h"
+#include "MyFunctionGraphNode"
 
 #include <vector>
 #include <map>
@@ -26,6 +27,7 @@ namespace {
 
 		// Global Variables
 		int cycle_count = 0;
+		std::stack<MyFunctionGraphNode> stack;
 
 
 		/*
