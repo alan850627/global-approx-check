@@ -53,18 +53,37 @@ public:
 		return i;
 	}
 
-	bool equals(MyInstruction comp) {
-		// TODO
-		return false;
+	bool operator==(const MyInstruction& comp) {
+		return (root == comp.root);
 	}
 
-	bool equals_deep(MyInstruction comp) {
-		// TODO
-		return false;
+	bool hasSameOperands(MyInstruction comp) {
+		return hasSameOperands(root, comp.root, false);
+	}
+
+	bool hasSameOperandsDeep(MyInstruction comp) {
+		return hasSameOperands(root, comp.root, true);
+	}
+
+	std::string getOpcodeName() {
+		Instruction* vi = getInstruction();
+		if (vi == 0) {
+			return std::string("");
+		}
+		return std::string(vi->getOpcodeName());
 	}
 
 	MyInstruction getAddressDependency() {
-		// TODO
+		std::string opcode = getOpcodeName();
+		if (opcode == "load") {
+			User::op_iterator defI = vi->op_begin();
+			return MyInstruction(*defI);
+		}
+		else if (opcode == "store") {
+			User::op_iterator defI = vi->op_begin();
+			defI++;
+			return MyInstruction(*defI);
+		}
 		return MyInstruction();
 	}
 
@@ -113,6 +132,43 @@ public:
 				errs() << "//Instruction:" << *root << " //Status: " << "Pending\n";
 				break;
 		}
+	}
+
+private:
+	bool hasSameOperands(Value* a, Value* b, bool deep) {
+		if(a == b) {
+			return true;
+		}
+
+		if (!isa<Instruction>(a) || !isa<Instruction>(b)) {
+			return false;
+		}
+
+		Instruction *a_inst = dyn_cast<Instruction>(a);
+		Instruction *b_inst = dyn_cast<Instruction>(b);
+		if (a_inst->getOpcode() != b_inst->getOpcode() || a_inst->getNumOperands() != b_inst->getNumOperands() || a_inst->getType() != b_inst->getType()) {
+			return false;
+		}
+		// If both instructions have no operands, they are identical.
+		if (a_inst->getNumOperands() == 0 && b_inst->getNumOperands() == 0) {
+			return true;
+		}
+
+		// We have two instructions of identical opcode and #operands.  Check to see
+		// if all operands are the same.
+		if (!std::equal(a_inst->op_begin(), a_inst->op_end(), b_inst->op_begin())) {
+			if (!deep) {
+				return false;
+			}
+
+			for (User::op_iterator i = a_inst->op_begin(), j = b_inst->op_begin(); i != a_inst->op_end() && j != b_inst->op_end(); i++, j++) {
+				if(!hasSameOperands(*i, *j, true)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return true;
 	}
 };
 
