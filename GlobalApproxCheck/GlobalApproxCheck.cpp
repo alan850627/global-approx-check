@@ -48,16 +48,14 @@ namespace {
 			CallGraph cg = CallGraph(M);
 			// cg.dump();
 
-
 			// Test
 			CallGraphNode* cgn = cg.getExternalCallingNode();
 			cgn = (*cgn)[1];
 			Function* func = cgn->getFunction();
 			MyFunction f(func);
 			for (int i = 0; i < f.args.size(); i++) {
-				f.args[i].first.print();
+				f.args[i].first->print();
 			}
-
 			return false;
 		};
 	};
