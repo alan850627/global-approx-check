@@ -15,8 +15,8 @@ using namespace llvm;
 class MyFunction {
 public:
   Function* root;
-  std::vector<MyInstruction> args;
-  std::vector<MyInstruction> insts;
+  std::vector<MyInstruction*> args;
+  std::vector<MyInstruction*> insts;
   std::string name;
 
   MyFunction(Function* fun) {
@@ -41,10 +41,16 @@ public:
 		return *this;
 	}
 
+  ~MyFUnction() {
+    for (inst : insts) {
+      delete inst;
+    }
+  }
+
   void markRet() {
     for (inst : insts) {
-      if (inst.getOpcodeName() == "ret") {
-        inst.markAsNonApprox();
+      if (inst->getOpcodeName() == "ret") {
+        inst->markAsNonApprox();
       }
     }
   }
@@ -53,11 +59,11 @@ public:
     errs() << "Function Name: " << name << "\n\n";
     errs() << "Arguments:\n"
     for (arg : args) {
-      arg.print();
+      arg->print();
     }
     errs() << "\nInstructions:\n"
     for (inst : insts) {
-      inst.print();
+      inst->print();
     }
     errs() << "\n"
   }
@@ -78,7 +84,8 @@ private:
   void initializeInstructions() {
     insts.clear();
     for (inst_iterator ii = inst_begin(*root); ii != inst_end(*root); ii++) {
-      insts.push_back(MyInstruction(&*ii));;
+      MyInstruction* mi = new MyInstruction(&*ii);
+      insts.push_back(mi);
     }
   }
 

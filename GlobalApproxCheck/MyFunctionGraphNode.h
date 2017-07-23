@@ -13,21 +13,30 @@ public:
   std::vector<MyFunction*> parents;
 
   MyFunctionGraphNode(MyFunction* mf) {
-    //TODO
+    root = mf;
+    childs.clear();
+    parents.clear();
   }
 
   MyFunctionGraphNode(const MyFunctionGraphNode& copy_from) {
-    //TODO
+    root = mf;
+    childs = copy_from->childs;
+    parents = copy_from->parents;
   }
 
   MyFunctionGraphNode& operator=(const MyFunctionGraphNode& copy_from) {
-    //TODO
+    root = mf;
+    childs = copy_from->childs;
+    parents = copy_from->parents;
     return *this;
   }
 
-  void propagateToParent() {
+  void propagate() {
     //TODO
-    // 1) Find all call instructions in parents
+  }
+
+  void propagateToParent() {
+    //TODO: 1) Find all call instructions in parents
     // 2) Find ones that match the root function name
     // 3) Using use-def chain, mark appropriate instructions based on input.
   }
