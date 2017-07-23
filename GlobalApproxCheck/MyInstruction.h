@@ -82,6 +82,7 @@ public:
 	}
 
 	MyInstruction getAddressDependency() {
+		Instruction* vi = getInstruction();
 		std::string opcode = getOpcodeName();
 		if (opcode == "load") {
 			User::op_iterator defI = vi->op_begin();

@@ -7,14 +7,12 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/CallGraph.h"
 
-// TODO: Get this cleaner
 #include "MyTypes.h"
 #include "MyInstruction.h"
 #include "MyFunction.h"
-#include "MyFunctionGraphNode"
+#include "MyFunctionGraphNode.h"
 
 #include <vector>
-#include <map>
 #include <utility>
 #include <string>
 #include <iostream>
@@ -27,7 +25,6 @@ namespace {
 
 		// Global Variables
 		int cycle_count = 0;
-		std::stack<MyFunctionGraphNode> stack;
 
 
 		/*
@@ -54,7 +51,7 @@ namespace {
 			Function* func = cgn->getFunction();
 			MyFunction f(func);
 			for (int i = 0; i < f.args.size(); i++) {
-				f.args[i].first->print();
+				f.args[i]->print();
 			}
 			return false;
 		};

@@ -21,34 +21,34 @@ public:
 
   MyFunction(Function* fun) {
     root = fun;
-    name = std::string(fun.getName());
+    name = std::string(fun->getName());
     initializeInstructions();
     initializeArguments();
   }
 
   MyFunction(const MyFunction& copy_from) {
     root = copy_from.root;
-    name = std::string(copy_from.getName());
+    name = copy_from.name;
     args = copy_from.args;
     insts = copy_from.insts;
   }
 
   MyFunction& operator=(const MyFunction& copy_from) {
     root = copy_from.root;
-    name = std::string(copy_from.getName());
+    name = copy_from.name;
     args = copy_from.args;
     insts = copy_from.insts;
 		return *this;
 	}
 
-  ~MyFUnction() {
-    for (inst : insts) {
+  ~MyFunction() {
+    for (MyInstruction* inst : insts) {
       delete inst;
     }
   }
 
   void markRet() {
-    for (inst : insts) {
+    for (MyInstruction* inst : insts) {
       if (inst->getOpcodeName() == "ret") {
         inst->markAsNonApprox();
       }
@@ -57,15 +57,15 @@ public:
 
   void print() {
     errs() << "Function Name: " << name << "\n\n";
-    errs() << "Arguments:\n"
-    for (arg : args) {
+    errs() << "Arguments:\n";
+    for (MyInstruction* arg : args) {
       arg->print();
     }
-    errs() << "\nInstructions:\n"
-    for (inst : insts) {
+    errs() << "\nInstructions:\n";
+    for (MyInstruction* inst : insts) {
       inst->print();
     }
-    errs() << "\n"
+    errs() << "\n";
   }
 
   void printSimple() {
@@ -75,7 +75,7 @@ public:
 private:
   void initializeArguments() {
     args.clear();
-    const int NUM_ARGS = (root->arg_end() - root->arg_begin());
+    int NUM_ARGS = std::distance(root->arg_end(), root->arg_begin());
     for (int i = 0; i < NUM_ARGS; i++) {
 			args.push_back(insts[i]);
     }

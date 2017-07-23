@@ -19,15 +19,15 @@ public:
   }
 
   MyFunctionGraphNode(const MyFunctionGraphNode& copy_from) {
-    root = mf;
-    childs = copy_from->childs;
-    parents = copy_from->parents;
+    root = copy_from.root;
+    childs = copy_from.childs;
+    parents = copy_from.parents;
   }
 
   MyFunctionGraphNode& operator=(const MyFunctionGraphNode& copy_from) {
-    root = mf;
-    childs = copy_from->childs;
-    parents = copy_from->parents;
+    root = copy_from.root;
+    childs = copy_from.childs;
+    parents = copy_from.parents;
     return *this;
   }
 
