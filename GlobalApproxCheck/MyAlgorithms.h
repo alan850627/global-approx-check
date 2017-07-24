@@ -10,6 +10,9 @@
 #include "MyFunction.h"
 
 #include <vector>
+#include <iostream>
+
+int cycle_count = 0;
 
 /*
 * Run num cycles
@@ -26,8 +29,13 @@ void pause(Value* vi) {
 * If it is, it will return the index that contains.
 * if not, it will return -1.
 */
-int getFunctionIndex(std::vector<MyFunction*>, Function*) {
-
+int getFunctionIndex(std::vector<MyFunction*> v, Function* f) {
+  for (int i = 0; i < v.size(); i++) {
+    if (v[i]->root == f) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 #endif

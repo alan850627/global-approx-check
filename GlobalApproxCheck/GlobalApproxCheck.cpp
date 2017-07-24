@@ -10,11 +10,11 @@
 #include "MyTypes.h"
 #include "MyInstruction.h"
 #include "MyFunction.h"
+#include "MyAlgorithms.h"
 
 #include <vector>
 #include <utility>
 #include <string>
-#include <iostream>
 #include <cassert>
 #include <algorithm>
 using namespace llvm;
@@ -25,31 +25,26 @@ namespace {
 		GlobalApproxCheck() : ModulePass(ID) {}
 
 		// Global Variables
-		int cycle_count = 0;
 		std::vector<MyFunction*> allFunctions;
 
-
-		/*
-		* Run num cycles
-		*/
-		void pause(Value* vi) {
-			if (cycle_count == 0) {
-				std::cin >> cycle_count;
-			}
-			cycle_count -= 1;
-		}
 
 		/*
 		* Load child functions
 		*/
 		void loadChildFunctions(MyFunction* root, CallGraphNode* cgn) {
 			for (int i = 0; i < cgn->size(); i++) {
-				//TODO: STOP ON RECURSIVE FUNCTIONS
-				MyFunction* mf = new MyFunction((*cgn)[i]->getFunction());
-				allFunctions.push_back(mf);
-				root->childs.push_back(mf);
-				mf->parents.push_back(root);
-				loadChildFunctions(mf, (*cgn)[i]);
+				int j = getFunctionIndex(allFunctions, (*cgn)[i]->getFunction());
+				if (j == -1) {
+					MyFunction* mf = new MyFunction((*cgn)[i]->getFunction());
+					allFunctions.push_back(mf);
+					root->childs.push_back(mf);
+					mf->parents.push_back(root);
+					loadChildFunctions(mf, (*cgn)[i]);
+				} else {
+					MyFunction* mf = allFunctions[j];
+					root->childs.push_back(mf);
+					mf->parents.push_back(root);
+				}
 			}
 		}
 
