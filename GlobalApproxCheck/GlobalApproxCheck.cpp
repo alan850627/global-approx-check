@@ -10,12 +10,13 @@
 #include "MyTypes.h"
 #include "MyInstruction.h"
 #include "MyFunction.h"
-#include "MyFunctionGraphNode.h"
 
 #include <vector>
 #include <utility>
 #include <string>
 #include <iostream>
+#include <cassert>
+#include <algorithm>
 using namespace llvm;
 
 namespace {
@@ -25,6 +26,7 @@ namespace {
 
 		// Global Variables
 		int cycle_count = 0;
+		std::vector<MyFunction*> allFunctions;
 
 
 		/*
@@ -38,20 +40,52 @@ namespace {
 		}
 
 		/*
+		* Load child functions
+		*/
+		void loadChildFunctions(MyFunction* root, CallGraphNode* cgn) {
+			for (int i = 0; i < cgn->size(); i++) {
+				//TODO: STOP ON RECURSIVE FUNCTIONS
+				MyFunction* mf = new MyFunction((*cgn)[i]->getFunction());
+				allFunctions.push_back(mf);
+				root->childs.push_back(mf);
+				mf->parents.push_back(root);
+				loadChildFunctions(mf, (*cgn)[i]);
+			}
+		}
+
+		/*
 		* Main Pass
 		*/
 		virtual bool runOnModule(Module &M) {
 			errs() << "\n===================" << "Module " << M.getName() << "===================\n";
-			CallGraph cg = CallGraph(M);
-			// cg.dump();
 
-			// Test
+			// Variables
+			CallGraph cg = CallGraph(M);
 			CallGraphNode* cgn = cg.getExternalCallingNode();
-			cgn = (*cgn)[1];
-			Function* func = cgn->getFunction();
-			MyFunction f(func);
-			for (int i = 0; i < f.args.size(); i++) {
-				f.args[i]->print();
+			MyFunction* root = 0;
+
+			// locate main.
+			for (int i = 0; i < cgn->size(); i++) {
+				if (std::string((*cgn)[i]->getFunction()->getName()) == "main") {
+					// Found the main function
+					root = new MyFunction((*cgn)[i]->getFunction());
+					allFunctions.push_back(root);
+					cgn = (*cgn)[i];
+					break;
+				}
+			}
+			assert(root != 0);
+
+			// Get info out of callgraph.
+			loadChildFunctions(root, cgn);
+
+			for (MyFunction* mf : allFunctions) {
+				mf->print();
+			}
+
+			// Clear Memory
+			for (MyFunction* mf : allFunctions) {
+				delete mf;
 			}
 			return false;
 		};

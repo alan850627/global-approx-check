@@ -136,13 +136,13 @@ public:
 	void print() {
 		switch (approxStatus) {
 			case ApproxStatus::approxable:
-				errs() << "//Instruction:" << *root << " //Status: " << "Approxable\n";
+				errs() << *root << " //Status: " << "Approxable\n";
 				break;
 			case ApproxStatus::nonApproxable:
-				errs() << "//Instruction:" << *root << " //Status: " << "Not Approxable //Propagated: " << propagated << "\n";
+				errs() << *root << " //Status: " << "Not Approxable //Propagated: " << propagated << "\n";
 				break;
 			case ApproxStatus::pending:
-				errs() << "//Instruction:" << *root << " //Status: " << "Pending\n";
+				errs() << *root << " //Status: " << "Pending\n";
 				break;
 		}
 	}
