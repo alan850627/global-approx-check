@@ -46,8 +46,8 @@ public:
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
-		return *this;
-	}
+    return *this;
+  }
 
   MyFunction() {
     root = 0;
@@ -78,10 +78,6 @@ public:
         inst->markAsNonApprox();
       }
     }
-  }
-
-  void propagate() {
-    //TODO
   }
 
   void propagateToParent() {

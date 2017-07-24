@@ -8,6 +8,7 @@
 #define _my_alroithms_h
 
 #include "MyFunction.h"
+#include "MyInstruction.h"
 
 #include <vector>
 #include <iostream>
@@ -36,6 +37,15 @@ int getFunctionIndex(std::vector<MyFunction*> v, Function* f) {
     }
   }
   return -1;
+}
+
+/*
+* This function takes an instruction as input, and looks at the use-
+* def chain and mark all those instructions as non-approxable. The
+* state of the input function will not be changed.
+*/
+void propagateUp(MyInstruction* vi) {
+  //TODO
 }
 
 #endif
