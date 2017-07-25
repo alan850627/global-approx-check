@@ -153,7 +153,7 @@ private:
   void initializeInstructions() {
     insts.clear();
     for (inst_iterator ii = inst_begin(*root); ii != inst_end(*root); ii++) {
-      MyInstruction* mi = new MyInstruction(&*ii);
+      MyInstruction* mi = new MyInstruction(&*ii, this);
       insts.push_back(mi);
     }
   }

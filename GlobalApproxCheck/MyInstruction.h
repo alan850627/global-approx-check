@@ -16,6 +16,7 @@ using namespace llvm;
 class MyInstruction {
 public:
 	Value* root;
+	MyFunction* function;
 	ApproxStatus approxStatus;
 	bool propagated;
 
@@ -25,28 +26,32 @@ public:
 		propagated = false;
 	}
 
-	MyInstruction(Instruction* in) {
+	MyInstruction(Instruction* in, MyFunction* mf) {
 		root = (Value*)in;
 		approxStatus = ApproxStatus::pending;
 		propagated = false;
+		function = mf;
 	}
 
-	MyInstruction(Value* in) {
+	MyInstruction(Value* in, MyFunction* mf) {
 		root = in;
 		approxStatus = ApproxStatus::pending;
 		propagated = false;
+		function = mf;
 	}
 
 	MyInstruction(const MyInstruction& copy_from) {
 		root = copy_from.root;
 		approxStatus = copy_from.approxStatus;
 		propagated = copy_from.propagated;
+		function = copy_from.function;
 	}
 
 	MyInstruction& operator=(const MyInstruction& copy_from) {
 		root = copy_from.root;
 		approxStatus = copy_from.approxStatus;
 		propagated = copy_from.propagated;
+		function = copy_from.function;
 		return *this;
 	}
 
