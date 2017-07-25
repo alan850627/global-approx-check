@@ -19,7 +19,7 @@ public:
   Function* root;
   std::vector<MyInstruction*> args;
   std::vector<MyInstruction*> insts;
-  std::vector<MyInstruction*> criticalAddressVec;
+  std::vector<MyInstruction*> critAddrVec;
   std::vector<MyFunction*> childs;
   std::vector<MyFunction*> parents;
   std::string name;
@@ -29,7 +29,7 @@ public:
     name = std::string(fun->getName());
     childs.clear();
     parents.clear();
-    criticalAddressVec.clear();
+    critAddrVec.clear();
     initializeInstructions();
     initializeArguments();
   }
@@ -38,7 +38,7 @@ public:
     root = copy_from.root;
     name = copy_from.name;
     args = copy_from.args;
-    criticalAddressVec = copy_from.criticalAddressVec;
+    critAddrVec = copy_from.critAddrVec;
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
@@ -48,7 +48,7 @@ public:
     root = copy_from.root;
     name = copy_from.name;
     args = copy_from.args;
-    criticalAddressVec = copy_from.criticalAddressVec;
+    critAddrVec = copy_from.critAddrVec;
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
@@ -214,8 +214,7 @@ public:
   /*
   * This function takes an instruction as input, and looks at the def-
   * use chain. If we see any instructions that modifies addresses (given
-  * in the criticalAddressVec), then we mark those instructions as non-
-  * approxable. 
+  * in the critAddrVec), then we mark those instructions as nonapproxable. 
   */
   void propagateDown(MyInstruction* vi) {
     //TODO
