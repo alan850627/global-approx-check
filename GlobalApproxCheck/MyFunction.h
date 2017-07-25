@@ -216,6 +216,16 @@ public:
     }
   }
 
+  /*
+  * This function takes an instruction as input, and looks at the def-
+  * use chain. If we see any instructions that modifies addresses (given
+  * in the criticalAddressVec), then we mark those instructions as non-
+  * approxable. 
+  */
+  void propagateDown(MyInstruction* vi) {
+    //TODO
+  }
+
   void print() {
     errs() << "#Function: " << name << "\n";
     errs() << " *Parents:\n";
