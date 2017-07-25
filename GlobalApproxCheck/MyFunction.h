@@ -204,6 +204,9 @@ public:
       //TODO 
       return;
     }
+    if (vi->getOpcodeName() == "load") {
+      //TODO: Found some "address" stored in memory
+    }
 
     vi->propagated = true;
     std::vector<MyInstruction*> dep = getUseDef(vi);
