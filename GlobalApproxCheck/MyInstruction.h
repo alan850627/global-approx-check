@@ -81,12 +81,13 @@ public:
 		}
 		propagated = false;
 		approxStatus = ApproxStatus::nonApproxable;
-		Instruction* instr = getInstruction();
-		if (instr != 0) {
-			LLVMContext& C = instr->getContext();
-			MDNode* N = MDNode::get(C, MDString::get(C, "no"));
-			instr->setMetadata("approx", N);
-		}
+		// TODO: This part is commented out to improve print.
+		// Instruction* instr = getInstruction();
+		// if (instr != 0) {
+		// 	LLVMContext& C = instr->getContext();
+		// 	MDNode* N = MDNode::get(C, MDString::get(C, "no"));
+		// 	instr->setMetadata("approx", N);
+		// }
 	}
 
 	void print() {
