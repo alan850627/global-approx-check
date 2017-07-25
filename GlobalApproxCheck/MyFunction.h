@@ -218,6 +218,21 @@ public:
   */
   void propagateDown(MyInstruction* vi) {
     //TODO
+    if (vi->getOpcodeName() == "store") {
+      MyInstruction* adddep = getAddressDependency(vi);
+      if (isInstructionInVector(adddep, critAddrVec)) {
+        // Found a store instruction that stores a new value into
+        // critical address.
+        vi->markAsNonApprox();
+        propagateUp(vi);
+      }
+      return;
+    }
+    
+    std::vector<MyInstruction*> uses = getDefUse(vi);
+    for (MyInstruction* use : uses) {
+      propagateDown(use);
+    }
   }
 
   void print() {
@@ -269,6 +284,15 @@ private:
       }
     }
     return 0;
+  }
+
+  bool isInstructionInVector(MyInstruction* mi, std::vector<MyInstruction*> v) {
+    for (MyInstruction* i : v) {
+      if (mi == i) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {
