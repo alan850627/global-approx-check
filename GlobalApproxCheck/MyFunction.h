@@ -105,7 +105,7 @@ public:
     }
   }
 
-  void propagateToChild(int arg_num) {
+  void propagateFromParent(int arg_num) {
     //TODO: This is to see if critical 'variable' is being modified. If it is,
     // mark all those instructions. Not sure if this function is needed.
   }
@@ -232,13 +232,29 @@ public:
       }
       return;
     }    
-    if (vi->getOpcodeName() == "call") {
-      //TODO: continue to propagate in child?
-    }
  
     std::vector<MyInstruction*> uses = getDefUse(vi);
     for (MyInstruction* use : uses) {
-      propagateDown(use);
+      if (use->getOpcodeName() == "call") {
+        // continue to propagate in child?
+        // 1) Find out which argument is being linked
+        // 2) Get the function
+        // 3) Call that function's propagateDown
+        Value* vf = use->getInstruction()->getOperand(use->getInstruction()->getNumOperands() - 1); // the function is always the last element.     
+        MyFunction* mf = getMyFunctionFromVector(vf, childs);
+        for (int i = 0; i < use->getInstruction()->getNumOperands(); i++) {
+          Value* v = use->getInstruction()->getOperand(i);
+          if (isa<Instruction>(v)) {
+            Instruction* ii = dyn_cast<Instruction>(v);
+            if (ii == vi->root) {
+              //Found the argument dependency
+              mf->propagateFromParent(i);
+            }
+          }
+        }          
+      } else {
+        propagateDown(use);
+      }
     }
   }
 
