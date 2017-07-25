@@ -98,6 +98,7 @@ public:
                 // Propagate this info to parent
                 if (isa<Instruction>(instr->getOperand(i))) {
                   MyInstruction* vi = parent->getMyInstruction(instr->getOperand(i));
+                  vi->markAsNonApprox();
                   parent->propagateUp(vi);
                 }
               }
