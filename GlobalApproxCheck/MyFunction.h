@@ -164,8 +164,9 @@ public:
 		}
 		for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
 			MyInstruction* nmi = getMyInstruction(*i);
-      assert(nmi != 0);
-			vec.push_back(nmi);
+      if (nmi != 0) {
+        vec.push_back(nmi);
+      }
 		}
 		return vec;
 	}
@@ -174,8 +175,9 @@ public:
 		std::vector<MyInstruction*> vec;
 		for (Value::user_iterator i = mi->root->user_begin(); i != mi->root->user_end(); i++) {
 			MyInstruction* nmi = getMyInstruction(*i);
-      assert(nmi != 0);
-			vec.push_back(nmi);
+      if (nmi != 0) {
+        vec.push_back(nmi);
+      }
 		}
 		return vec;
 	}
@@ -217,8 +219,8 @@ public:
       arg->print();
     }
     errs() << "#Instructions:\n";
-    for (MyInstruction* inst : insts) {
-      inst->print();
+    for (int i = args.size(); i < insts.size(); i++) {
+      insts[i]->print();
     }
     errs() << "\n";
   }

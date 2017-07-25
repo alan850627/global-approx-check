@@ -76,9 +76,11 @@ namespace {
 			allFunctions[3]->args[1]->approxStatus = ApproxStatus::nonApproxable;
 			allFunctions[3]->propagateToParent();
 
-			// Clear Memory
 			for (MyFunction* mf : allFunctions) {
 				mf->print();
+			}
+			// Clear Memory
+			for (MyFunction* mf : allFunctions) {
 				delete mf;
 			}
 			return false;
