@@ -39,13 +39,18 @@ int getFunctionIndex(std::vector<MyFunction*> v, Function* f) {
   return -1;
 }
 
+void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {
+
+}
+
 /*
 * This function takes an instruction as input, and looks at the use-
 * def chain and mark all those instructions as non-approxable. The
 * state of the input function will not be changed.
 */
 void propagateUp(MyInstruction* vi) {
-  //TODO
+  std::vector<MyInstruction*> history;
+  recurPropagateUp(vi, history);
 }
 
 #endif

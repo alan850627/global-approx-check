@@ -3,6 +3,7 @@
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include "MyInstruction.h"
@@ -116,6 +117,30 @@ public:
     return 0;
   }
 
+  MyInstruction* getInstruction(Value* vi) {
+    for (MyInstruction* mi : insts) {
+      if (mi->root == vi) {
+        return mi;
+      }
+    }
+    return 0;
+  }
+
+  MyInstruction* getAddressDependency(MyInstruction* mi) {
+    Instruction* vi = mi->getInstruction();
+    std::string opcode = mi->getOpcodeName();
+    if (opcode == "load") {
+      User::op_iterator defI = vi->op_begin();
+      return getInstruction(*defI);
+    }
+    else if (opcode == "store") {
+      User::op_iterator defI = vi->op_begin();
+      defI++;
+      return getInstruction(*defI);
+    }
+    return 0;
+  }
+
   void print() {
     errs() << "#Function: " << name << "\n";
     errs() << "#Parents:\n";
@@ -153,7 +178,7 @@ private:
   void initializeInstructions() {
     insts.clear();
     for (inst_iterator ii = inst_begin(*root); ii != inst_end(*root); ii++) {
-      MyInstruction* mi = new MyInstruction(&*ii, this);
+      MyInstruction* mi = new MyInstruction(&*ii);
       insts.push_back(mi);
     }
   }

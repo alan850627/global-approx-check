@@ -16,42 +16,31 @@ using namespace llvm;
 class MyInstruction {
 public:
 	Value* root;
-	MyFunction* function;
 	ApproxStatus approxStatus;
 	bool propagated;
 
-	MyInstruction () {
-		root = 0;
-		approxStatus = ApproxStatus::pending;
-		propagated = false;
-	}
-
-	MyInstruction(Instruction* in, MyFunction* mf) {
+	MyInstruction(Instruction* in) {
 		root = (Value*)in;
 		approxStatus = ApproxStatus::pending;
 		propagated = false;
-		function = mf;
 	}
 
-	MyInstruction(Value* in, MyFunction* mf) {
+	MyInstruction(Value* in) {
 		root = in;
 		approxStatus = ApproxStatus::pending;
 		propagated = false;
-		function = mf;
 	}
 
 	MyInstruction(const MyInstruction& copy_from) {
 		root = copy_from.root;
 		approxStatus = copy_from.approxStatus;
 		propagated = copy_from.propagated;
-		function = copy_from.function;
 	}
 
 	MyInstruction& operator=(const MyInstruction& copy_from) {
 		root = copy_from.root;
 		approxStatus = copy_from.approxStatus;
 		propagated = copy_from.propagated;
-		function = copy_from.function;
 		return *this;
 	}
 
@@ -84,21 +73,6 @@ public:
 			return std::string("");
 		}
 		return std::string(vi->getOpcodeName());
-	}
-
-	MyInstruction getAddressDependency() {
-		Instruction* vi = getInstruction();
-		std::string opcode = getOpcodeName();
-		if (opcode == "load") {
-			User::op_iterator defI = vi->op_begin();
-			return MyInstruction(*defI);
-		}
-		else if (opcode == "store") {
-			User::op_iterator defI = vi->op_begin();
-			defI++;
-			return MyInstruction(*defI);
-		}
-		return MyInstruction();
 	}
 
 	std::vector<MyInstruction> getUseDef() {
