@@ -195,7 +195,10 @@ public:
       return;
     }
     if (vi->getOpcodeName() == "call") {
-      //TODO
+      Value* vf = vi->getInstruction()->getOperand(vi->getInstruction()->getNumOperands() - 1); // the function is always the last element.
+      assert(isa<Function>(vf));
+      MyFunction* mf = getMyFunctionFromVector(vf, childs);
+      mf->markRet();
     }
     if (vi->getOpcodeName() == "alloca") {
       //TODO 
@@ -250,6 +253,15 @@ private:
       MyInstruction* mi = new MyInstruction(&*ii);
       insts.push_back(mi);
     }
+  }
+
+  MyFunction* getMyFunctionFromVector(Value* f, std::vector<MyFunction*> v) {
+    for (MyFunction* mf : v) {
+      if (f == mf->root) {
+        return mf;
+      }
+    }
+    return 0;
   }
 
   // void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {
