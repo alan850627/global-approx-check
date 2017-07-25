@@ -197,6 +197,10 @@ public:
     if (vi->getOpcodeName() == "call") {
       //TODO
     }
+    if (vi->getOpcodeName() == "alloca") {
+      //TODO 
+      return;
+    }
 
     vi->propagated = true;
     std::vector<MyInstruction*> dep = getUseDef(vi);
