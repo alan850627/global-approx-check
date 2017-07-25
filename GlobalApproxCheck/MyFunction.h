@@ -200,7 +200,9 @@ public:
       return;
     }
     if (vi->getOpcodeName() == "load") {
-      //TODO: Found some "address" stored in memory
+      //Found some "address" stored in memory
+      MyInstruction* crit = getAddressDependency(vi);
+      critAddrVec.push_back(crit);
     }
 
     vi->propagated = true;
@@ -217,7 +219,6 @@ public:
   * in the critAddrVec), then we mark those instructions as nonapproxable. 
   */
   void propagateDown(MyInstruction* vi) {
-    //TODO
     if (vi->getOpcodeName() == "store") {
       MyInstruction* adddep = getAddressDependency(vi);
       if (isInstructionInVector(adddep, critAddrVec)) {
