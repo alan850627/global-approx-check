@@ -15,6 +15,7 @@ int s[] = {1, 2, 3, 4, 5, 6};
 int main() {
 	int x = 4; //*
 	foo (&x);
+	lotsOfInputs(1, x, 3, 4);
 	return s[x]; //*
 }
 

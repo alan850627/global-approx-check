@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <utility>
+#include <cassert>
 using namespace llvm;
 
 class MyFunction {
@@ -88,7 +89,20 @@ public:
     for (MyFunction* parent : parents) {
       for (MyInstruction* inst : parent->insts) {
         if (inst->getOpcodeName() == "call") {
-          inst->print();
+          Instruction* instr = inst->getInstruction();
+          Value *f = instr->getOperand(instr->getNumOperands() - 1); // the function is always the last element.
+          assert(isa<Function>(f));
+          if (f == root) {
+            for (int i = 0; i < args.size(); i++) {
+              if (args[i]->approxStatus == ApproxStatus::nonApproxable && !args[i]->propagated) {
+                // Propagate this info to parent
+                if (isa<Instruction>(instr->getOperand(i))) {
+                  MyInstruction* vi = parent->getMyInstruction(instr->getOperand(i));
+                  parent->propagateUp(vi);
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -150,6 +164,7 @@ public:
 		}
 		for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
 			MyInstruction* nmi = getMyInstruction(*i);
+      assert(nmi != 0);
 			vec.push_back(nmi);
 		}
 		return vec;
@@ -159,6 +174,7 @@ public:
 		std::vector<MyInstruction*> vec;
 		for (Value::user_iterator i = mi->root->user_begin(); i != mi->root->user_end(); i++) {
 			MyInstruction* nmi = getMyInstruction(*i);
+      assert(nmi != 0);
 			vec.push_back(nmi);
 		}
 		return vec;
@@ -170,8 +186,20 @@ public:
   * state of the input function will not be changed.
   */
   void propagateUp(MyInstruction* vi) {
-    std::vector<MyInstruction*> history;
-    recurPropagateUp(vi, history);
+    if (vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
+      // already marked and propagated. No need to do it again.
+      return;
+    }
+    if (vi->getOpcodeName() == "call") {
+      //TODO
+    }
+
+    vi->propagated = true;
+    std::vector<MyInstruction*> dep = getUseDef(vi);
+    for (MyInstruction* mi : dep) {
+      mi->markAsNonApprox();
+      propagateUp(mi);
+    }
   }
 
   void print() {
@@ -216,36 +244,35 @@ private:
     }
   }
 
-  void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {
-    if (getInstructionIndex(history, vi) != -1) {
-      return;
-    }
-    if (vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
-      // already marked and propagated. No need to do it again.
-      return;
-    }
-
-    history.push_back(vi);
-    std::vector<MyInstruction*> dep = getUseDef(vi);
-    for (MyInstruction* mi : dep) {
-      mi->markAsNonApprox();
-      recurPropagateUp(mi, history);
-    }
-  }
-
-  /*
-  * Checks whether the instruction is in the vector or not.
-  * If it is, it will return the index that contains.
-  * if not, it will return -1.
-  */
-  int getInstructionIndex(std::vector<MyInstruction*> v, MyInstruction* mi) {
-    for (int i = 0; i < v.size(); i++) {
-      if (v[i] == mi) {
-        return i;
-      }
-    }
-    return -1;
-  }
+  // void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {
+  //   if (getInstructionIndex(history, vi) != -1) {
+  //     return;
+  //   }
+  //   if (vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
+  //     // already marked and propagated. No need to do it again.
+  //     return;
+  //   }
+  //   if (vi->getOpcodeName() == "call") {
+  //     //TODO
+  //   }
+  //
+  //   vi->propagated = true;
+  //   history.push_back(vi);
+  //   std::vector<MyInstruction*> dep = getUseDef(vi);
+  //   for (MyInstruction* mi : dep) {
+  //     mi->markAsNonApprox();
+  //     recurPropagateUp(mi, history);
+  //   }
+  // }
+  //
+  // int getInstructionIndex(std::vector<MyInstruction*> v, MyInstruction* mi) {
+  //   for (int i = 0; i < v.size(); i++) {
+  //     if (v[i] == mi) {
+  //       return i;
+  //     }
+  //   }
+  //   return -1;
+  // }
 
 };
 

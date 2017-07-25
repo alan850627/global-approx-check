@@ -73,12 +73,12 @@ namespace {
 			// Get info out of callgraph.
 			loadChildFunctions(root, cgn);
 
-			for (MyFunction* mf : allFunctions) {
-				mf->print();
-			}
+			allFunctions[3]->args[1]->approxStatus = ApproxStatus::nonApproxable;
+			allFunctions[3]->propagateToParent();
 
 			// Clear Memory
 			for (MyFunction* mf : allFunctions) {
+				mf->print();
 				delete mf;
 			}
 			return false;
