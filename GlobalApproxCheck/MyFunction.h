@@ -155,31 +155,31 @@ public:
   }
 
   std::vector<MyInstruction*> getUseDef(MyInstruction* mi) {
-		std::vector<MyInstruction*> vec;
-		Instruction* instr = mi->getInstruction();
-		if (instr == 0) {
-			// instr is not a llvm::Instruction, therefore it has no usedef.
-			return vec;
-		}
-		for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
-			MyInstruction* nmi = getMyInstruction(*i);
+    std::vector<MyInstruction*> vec;
+    Instruction* instr = mi->getInstruction();
+    if (instr == 0) {
+      // instr is not a llvm::Instruction, therefore it has no usedef.
+      return vec;
+    }
+    for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
+      MyInstruction* nmi = getMyInstruction(*i);
       if (nmi != 0) {
         vec.push_back(nmi);
       }
-		}
-		return vec;
-	}
+    }
+    return vec;
+  }
 
-	std::vector<MyInstruction*> getDefUse(MyInstruction* mi) {
-		std::vector<MyInstruction*> vec;
-		for (Value::user_iterator i = mi->root->user_begin(); i != mi->root->user_end(); i++) {
-			MyInstruction* nmi = getMyInstruction(*i);
+  std::vector<MyInstruction*> getDefUse(MyInstruction* mi) {
+    std::vector<MyInstruction*> vec;
+    for (Value::user_iterator i = mi->root->user_begin(); i != mi->root->user_end(); i++) {
+      MyInstruction* nmi = getMyInstruction(*i);
       if (nmi != 0) {
         vec.push_back(nmi);
       }
-		}
-		return vec;
-	}
+    }
+    return vec;
+  }
 
   /*
   * This function takes an instruction as input, and looks at the use-
@@ -198,7 +198,7 @@ public:
       mf->markRet();
     }
     if (vi->getOpcodeName() == "alloca") {
-      //TODO 
+      //TODO
       return;
     }
     if (vi->getOpcodeName() == "load") {
@@ -218,7 +218,7 @@ public:
   /*
   * This function takes an instruction as input, and looks at the def-
   * use chain. If we see any instructions that modifies addresses (given
-  * in the critAddrVec), then we mark those instructions as nonapproxable. 
+  * in the critAddrVec), then we mark those instructions as nonapproxable.
   */
   void propagateDown(MyInstruction* vi) {
     if (vi->getOpcodeName() == "store") {
@@ -233,8 +233,8 @@ public:
         propagateUp(vi);
       }
       return;
-    }    
- 
+    }
+
     std::vector<MyInstruction*> uses = getDefUse(vi);
     for (MyInstruction* use : uses) {
       if (use->getOpcodeName() == "call") {
@@ -242,7 +242,7 @@ public:
         // 1) Find out which argument is being linked
         // 2) Get the function
         // 3) Call that function's propagateDown
-        Value* vf = use->getInstruction()->getOperand(use->getInstruction()->getNumOperands() - 1); // the function is always the last element.     
+        Value* vf = use->getInstruction()->getOperand(use->getInstruction()->getNumOperands() - 1); // the function is always the last element.
         MyFunction* mf = getMyFunctionFromVector(vf, childs);
         for (int i = 0; i < use->getInstruction()->getNumOperands(); i++) {
           Value* v = use->getInstruction()->getOperand(i);
@@ -253,7 +253,7 @@ public:
               mf->propagateFromParent(i);
             }
           }
-        }          
+        }
       } else {
         propagateDown(use);
       }
@@ -290,7 +290,7 @@ private:
     args.clear();
     int const NUM_ARGS = std::distance(root->arg_begin(), root->arg_end());
     for (int i = 0; i < NUM_ARGS; i++) {
-			args.push_back(insts[i]);
+      args.push_back(insts[i]);
     }
   }
 
