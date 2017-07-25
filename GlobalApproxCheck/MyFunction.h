@@ -223,6 +223,9 @@ public:
       if (isInstructionInVector(adddep, critAddrVec)) {
         // Found a store instruction that stores a new value into
         // critical address.
+        if(vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
+          return; //the work is already done
+        }
         vi->markAsNonApprox();
         propagateUp(vi);
       }
