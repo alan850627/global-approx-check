@@ -206,19 +206,19 @@ public:
 
   void print() {
     errs() << "#Function: " << name << "\n";
-    errs() << "#Parents:\n";
+    errs() << " *Parents:\n";
     for (MyFunction* mf : parents) {
-      errs() << "  -" << mf->name << "\n";
+      errs() << "   -" << mf->name << "\n";
     }
-    errs() << "#Childs:\n";
+    errs() << " *Childs:\n";
     for (MyFunction* mf : childs) {
-      errs() << "  -" << mf->name << "\n";
+      errs() << "   -" << mf->name << "\n";
     }
-    errs() << "#Arguments:\n";
+    errs() << " *Arguments:\n";
     for (MyInstruction* arg : args) {
       arg->print();
     }
-    errs() << "#Instructions:\n";
+    errs() << " *Instructions:\n";
     for (int i = args.size(); i < insts.size(); i++) {
       insts[i]->print();
     }

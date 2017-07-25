@@ -73,7 +73,7 @@ namespace {
 			// Get info out of callgraph.
 			loadChildFunctions(root, cgn);
 
-			allFunctions[3]->args[1]->approxStatus = ApproxStatus::nonApproxable;
+			allFunctions[3]->args[1]->markAsNonApprox();
 			allFunctions[3]->propagateToParent();
 
 			for (MyFunction* mf : allFunctions) {
