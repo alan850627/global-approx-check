@@ -230,8 +230,11 @@ public:
         propagateUp(vi);
       }
       return;
+    }    
+    if (vi->getOpcodeName() == "call") {
+      //TODO: continue to propagate in child?
     }
-    
+ 
     std::vector<MyInstruction*> uses = getDefUse(vi);
     for (MyInstruction* use : uses) {
       propagateDown(use);
