@@ -164,6 +164,16 @@ public:
 		return vec;
 	}
 
+  /*
+  * This function takes an instruction as input, and looks at the use-
+  * def chain and mark all those instructions as non-approxable. The
+  * state of the input function will not be changed.
+  */
+  void propagateUp(MyInstruction* vi) {
+    std::vector<MyInstruction*> history;
+    recurPropagateUp(vi, history);
+  }
+
   void print() {
     errs() << "#Function: " << name << "\n";
     errs() << "#Parents:\n";
@@ -204,6 +214,37 @@ private:
       MyInstruction* mi = new MyInstruction(&*ii);
       insts.push_back(mi);
     }
+  }
+
+  void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {
+    if (getInstructionIndex(history, vi) != -1) {
+      return;
+    }
+    if (vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
+      // already marked and propagated. No need to do it again.
+      return;
+    }
+
+    history.push_back(vi);
+    std::vector<MyInstruction*> dep = getUseDef(vi);
+    for (MyInstruction* mi : dep) {
+      mi->markAsNonApprox();
+      recurPropagateUp(mi, history);
+    }
+  }
+
+  /*
+  * Checks whether the instruction is in the vector or not.
+  * If it is, it will return the index that contains.
+  * if not, it will return -1.
+  */
+  int getInstructionIndex(std::vector<MyInstruction*> v, MyInstruction* mi) {
+    for (int i = 0; i < v.size(); i++) {
+      if (v[i] == mi) {
+        return i;
+      }
+    }
+    return -1;
   }
 
 };
