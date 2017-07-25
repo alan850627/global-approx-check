@@ -117,7 +117,7 @@ public:
     return 0;
   }
 
-  MyInstruction* getInstruction(Value* vi) {
+  MyInstruction* getMyInstruction(Value* vi) {
     for (MyInstruction* mi : insts) {
       if (mi->root == vi) {
         return mi;
@@ -131,15 +131,38 @@ public:
     std::string opcode = mi->getOpcodeName();
     if (opcode == "load") {
       User::op_iterator defI = vi->op_begin();
-      return getInstruction(*defI);
+      return getMyInstruction(*defI);
     }
     else if (opcode == "store") {
       User::op_iterator defI = vi->op_begin();
       defI++;
-      return getInstruction(*defI);
+      return getMyInstruction(*defI);
     }
     return 0;
   }
+
+  std::vector<MyInstruction*> getUseDef(MyInstruction* mi) {
+		std::vector<MyInstruction*> vec;
+		Instruction* instr = mi->getInstruction();
+		if (instr == 0) {
+			// instr is not a llvm::Instruction, therefore it has no usedef.
+			return vec;
+		}
+		for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
+			MyInstruction* nmi = getMyInstruction(*i);
+			vec.push_back(nmi);
+		}
+		return vec;
+	}
+
+	std::vector<MyInstruction*> getDefUse(MyInstruction* mi) {
+		std::vector<MyInstruction*> vec;
+		for (Value::user_iterator i = mi->root->user_begin(); i != mi->root->user_end(); i++) {
+			MyInstruction* nmi = getMyInstruction(*i);
+			vec.push_back(nmi);
+		}
+		return vec;
+	}
 
   void print() {
     errs() << "#Function: " << name << "\n";

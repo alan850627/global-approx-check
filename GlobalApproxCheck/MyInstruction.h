@@ -75,29 +75,6 @@ public:
 		return std::string(vi->getOpcodeName());
 	}
 
-	std::vector<MyInstruction> getUseDef() {
-		std::vector<MyInstruction> vec;
-		Instruction* instr = getInstruction();
-		if (instr == 0) {
-			// instr is not a llvm::Instruction, therefore it has no usedef.
-			return vec;
-		}
-		for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
-			MyInstruction mi(*i);
-			vec.push_back(mi);
-		}
-		return vec;
-	}
-
-	std::vector<MyInstruction> getDefUse() {
-		std::vector<MyInstruction> vec;
-		for (Value::user_iterator i = root->user_begin(); i != root->user_end(); i++) {
-			MyInstruction mi(*i);
-			vec.push_back(mi);
-		}
-		return vec;
-	}
-
 	void markAsNonApprox() {
 		if (approxStatus == ApproxStatus::nonApproxable) {
 			return;
