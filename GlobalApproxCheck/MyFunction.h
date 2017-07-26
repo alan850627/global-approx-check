@@ -12,6 +12,7 @@
 #include <vector>
 #include <utility>
 #include <cassert>
+#include <iostream>
 using namespace llvm;
 
 class MyFunction {
@@ -23,6 +24,7 @@ public:
   std::vector<MyFunction*> childs;
   std::vector<MyFunction*> parents;
   std::string name;
+  int cycle_count = 0;
 
   MyFunction(Function* fun) {
     root = fun;
@@ -73,6 +75,7 @@ public:
     for (MyInstruction* inst : insts) {
       if (inst->getOpcodeName() == "ret") {
         inst->markAsNonApprox();
+        debug(inst);
       }
     }
   }
@@ -213,6 +216,7 @@ public:
     std::vector<MyInstruction*> dep = getUseDef(vi);
     for (MyInstruction* mi : dep) {
       mi->markAsNonApprox();
+      debug(mi);
       propagateUp(mi);
     }
   }
@@ -232,6 +236,7 @@ public:
           return; //the work is already done
         }
         vi->markAsNonApprox();
+        debug(vi);
         propagateUp(vi);
       }
       return;
@@ -329,6 +334,16 @@ private:
       }
     }
     return false;
+  }
+
+  /*
+  * Run num cycles
+  */
+  void debug(MyInstruction* vi) {
+    if (cycle_count == 0) {
+      std::cin >> cycle_count;
+    }
+    cycle_count -= 1;
   }
 
   // void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {
