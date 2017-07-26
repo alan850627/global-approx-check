@@ -106,8 +106,6 @@ public:
   }
 
   void propagateFromParent(int arg_num) {
-    //TODO: This is to see if critical 'variable' is being modified. If it is,
-    // mark all those instructions. Not sure if this function is needed.
     MyInstruction* mi = args[arg_num];
     propagateDown(mi);
   }

@@ -25,6 +25,7 @@ namespace {
 
     // Global Variables
     std::vector<MyFunction*> allFunctions;
+    std::vector<MyFunction*> stack;
 
 
     /*
@@ -43,6 +44,24 @@ namespace {
           MyFunction* mf = allFunctions[j];
           root->childs.push_back(mf);
           mf->parents.push_back(root);
+        }
+      }
+    }
+
+    void findAddressUsageAndPropagateUp(MyFunction* mf) {
+      for (MyInstruction* mi : mf->insts) {
+        std::string oc = mi->getOpcodeName();
+        if (oc == "load" || oc == "br" || oc == "load") {
+          std::vector<MyInstruction*> dep = mf->getUseDef(mi);
+          for (MyInstruction* d : dep) {
+            mf->propagateUp(d);
+          }
+        }
+        else if (oc == "store") {
+          std::vector<MyInstruction*> dep = mf->getUseDef(mi);
+          for (int i = 1; i < dep.size(); i++) {
+            mf->propagateUp(dep[i]);
+          }
         }
       }
     }
@@ -73,12 +92,10 @@ namespace {
       // Get info out of callgraph.
       loadChildFunctions(root, cgn);
 
-      allFunctions[3]->args[1]->markAsNonApprox();
-      allFunctions[3]->propagateToParent();
+      // GLOBAL-APPROX-CHECK ALGORITHM HERE
 
-      for (MyFunction* mf : allFunctions) {
-        mf->print();
-      }
+
+      // END GLOBAL-APPROX-CHECK ALGORITHM
       // Clear Memory
       for (MyFunction* mf : allFunctions) {
         delete mf;
