@@ -76,6 +76,17 @@ namespace {
       }
     }
 
+    void findAddressBeingUsedAsData(MyFunction* mf) {
+      for (MyInstruction* mi : mf->critAddrVec) {
+        mf->propagateDown(mi);
+        for (MyInstruction* comp : mf->insts) {
+          if (mi->hasSameOperands(*comp)) {
+            mf->propagateDown(comp);
+          }
+        }
+      }
+    }
+
     /*
     * Main Pass
     */
