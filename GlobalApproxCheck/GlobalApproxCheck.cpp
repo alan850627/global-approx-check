@@ -89,7 +89,7 @@ namespace {
       for (MyInstruction* mi : mf->critAddrVec) {
         mf->propagateDown(mi);
         for (MyInstruction* comp : mf->insts) {
-          if (mi->hasSameOperands(*comp)) {
+          if (mi->getOpcodeName() != "alloca" && mi->hasSameOperands(*comp)) {
             mf->propagateDown(comp);
           }
         }
@@ -98,7 +98,7 @@ namespace {
 
     void findAllUsesOfGlobalVariable(MyFunction* mf) {
       for (MyInstruction* mi : mf->globals) {
-        mf->propagateDown(mi);
+        mf->propagateGlobalsDown(mi);
       }
     }
 

@@ -274,7 +274,13 @@ public:
         }
       } else if (use->getOpcodeName() == "store") {
         MyInstruction* adddep = getAddressDependency(use);
-        if (isInstructionInVectorDeep(adddep, critAddrVec) || adddep == vi) {
+        bool isCritical;
+        if (isa<GlobalVariable>(adddep->root) || adddep->getOpcodeName() == "alloca") {
+          isCritical = isInstructionInVector(adddep, critAddrVec);
+        } else {
+          isCritical = isInstructionInVectorDeep(adddep, critAddrVec);
+        }
+        if (isCritical) {
           // Found a store instruction that stores a new value into
           // critical address.
           if(use->approxStatus == ApproxStatus::nonApproxable && use->propagated) {
@@ -286,6 +292,49 @@ public:
         }
       } else {
         propagateDown(use);
+      }
+    }
+  }
+
+  /*
+  * This function takes an instruction as input, and looks at the def-
+  * use chain. If we see any instructions that modifies addresses (given
+  * in the critAddrVec), then we mark those instructions as nonapproxable.
+  */
+  void propagateGlobalsDown(MyInstruction* vi) {
+    std::vector<MyInstruction*> uses = getDefUse(vi);
+    for (MyInstruction* use : uses) {
+      if (use->getOpcodeName() == "call") {
+        // continue to propagate in child?
+        // 1) Find out which argument is being linked
+        // 2) Get the function
+        // 3) Call that function's propagateDown
+        Value* vf = use->getInstruction()->getOperand(use->getInstruction()->getNumOperands() - 1); // the function is always the last element.
+        MyFunction* mf = getMyFunctionFromVector(vf, childs);
+        for (int i = 0; i < use->getInstruction()->getNumOperands(); i++) {
+          Value* v = use->getInstruction()->getOperand(i);
+          if (isa<Instruction>(v)) {
+            Instruction* ii = dyn_cast<Instruction>(v);
+            if (ii == vi->root) {
+              //Found the argument dependency
+              mf->propagateFromParent(i);
+            }
+          }
+        }
+      } else if (use->getOpcodeName() == "store") {
+        MyInstruction* adddep = getAddressDependency(use);
+        if (adddep == vi) {
+          // Found a store instruction that stores a new value into
+          // critical address.
+          if(use->approxStatus == ApproxStatus::nonApproxable && use->propagated) {
+            return; //the work is already done
+          }
+          debug(use);
+          use->markAsNonApprox();
+          propagateUp2(use);
+        }
+      } else {
+        propagateGlobalsDown(use);
       }
     }
   }
@@ -403,7 +452,7 @@ private:
     for (MyInstruction* mi : dep) {
       debug(mi);
       mi->markAsNonApprox();
-      propagateUp(mi);
+      propagateUp2(mi);
     }
   }
 
