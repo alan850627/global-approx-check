@@ -18,6 +18,8 @@ int main(void) {
   b = b + c;
   c = a + b;
   d[b] = a;
+  a = b + a;
+  x[a] = d[2];
   return c;
 }
 
