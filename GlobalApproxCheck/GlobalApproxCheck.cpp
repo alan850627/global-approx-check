@@ -114,6 +114,9 @@ namespace {
       findAddressBeingUsedAsData(root);
 
       // END GLOBAL-APPROX-CHECK ALGORITHM
+      for (MyFunction* mf : allFunctions) {
+        mf->print();
+      }
       // Clear Memory
       for (MyFunction* mf : allFunctions) {
         delete mf;
