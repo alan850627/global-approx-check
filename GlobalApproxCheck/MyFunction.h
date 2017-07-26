@@ -104,7 +104,7 @@ public:
                 if (isa<Instruction>(instr->getOperand(i))) {
                   MyInstruction* vi = parent->getMyInstruction(instr->getOperand(i));
                   args[i]->propagated = true;
-                  debug(vi);
+                  parent->debug(vi);
                   vi->markAsNonApprox();
                   parent->propagateUp(vi);
                 }
@@ -181,18 +181,13 @@ public:
       // instr is not a llvm::Instruction, therefore it has no usedef.
       return vec;
     }
-    bool skipfirst = mi->getOpcodeName() == "store";
     for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
-      if (skipfirst) {
-        skipfirst = false;
-      } else {
-        MyInstruction* nmi = getMyInstruction(*i);
-        if (nmi != 0 && !isa<GlobalVariable>(*i)) {
-          vec.push_back(nmi);
-        } else if (isa<GlobalVariable>(*i)) {
-          // Might be a global variable
-          addGlobalVariable(*i);
-        }
+      MyInstruction* nmi = getMyInstruction(*i);
+      if (nmi != 0 && !isa<GlobalVariable>(*i)) {
+        vec.push_back(nmi);
+      } else if (isa<GlobalVariable>(*i)) {
+        // Might be a global variable
+        addGlobalVariable(*i);
       }
     }
     return vec;
@@ -258,21 +253,6 @@ public:
   * in the critAddrVec), then we mark those instructions as nonapproxable.
   */
   void propagateDown(MyInstruction* vi) {
-    if (vi->getOpcodeName() == "store") {
-      MyInstruction* adddep = getAddressDependency(vi);
-      if (isInstructionInVectorDeep(adddep, critAddrVec)) {
-        // Found a store instruction that stores a new value into
-        // critical address.
-        if(vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
-          return; //the work is already done
-        }
-        debug(vi);
-        vi->markAsNonApprox();
-        propagateUp(vi);
-      }
-      return;
-    }
-
     std::vector<MyInstruction*> uses = getDefUse(vi);
     for (MyInstruction* use : uses) {
       if (use->getOpcodeName() == "call") {
@@ -291,6 +271,18 @@ public:
               mf->propagateFromParent(i);
             }
           }
+        }
+      } else if (use->getOpcodeName() == "store") {
+        MyInstruction* adddep = getAddressDependency(use);
+        if (isInstructionInVectorDeep(adddep, critAddrVec) || adddep == vi) {
+          // Found a store instruction that stores a new value into
+          // critical address.
+          if(use->approxStatus == ApproxStatus::nonApproxable && use->propagated) {
+            return; //the work is already done
+          }
+          debug(use);
+          use->markAsNonApprox();
+          propagateUp2(use);
         }
       } else {
         propagateDown(use);
@@ -348,6 +340,16 @@ public:
     cycle_count -= 1;
   }
 
+  void addGlobalVariable(Value* v) {
+    for (MyInstruction* g : globals) {
+      if (g->root == v) {
+        return;
+      }
+    }
+    MyInstruction* mi = new MyInstruction(v);
+    globals.push_back(mi);
+  }
+
 private:
   void initializeArguments() {
     args.clear();
@@ -362,6 +364,46 @@ private:
     for (inst_iterator ii = inst_begin(*root); ii != inst_end(*root); ii++) {
       MyInstruction* mi = new MyInstruction(&*ii);
       insts.push_back(mi);
+    }
+  }
+
+  /*
+  * This function is very similar to propagateUp, except is only used when we
+  * see a "store" when propagating down. In other words, this function only
+  * marks those instructions that modify what's pointed by critAddrVec, and
+  * cannot add to that vector. That's the primary reason why we have functions
+  * that do very similar things.
+  */
+  void propagateUp2(MyInstruction* vi) {
+    if (vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
+      // already marked and propagated. No need to do it again.
+      return;
+    }
+    if (vi->getOpcodeName() == "call") {
+      Value* vf = vi->getInstruction()->getOperand(vi->getInstruction()->getNumOperands() - 1); // the function is always the last element.
+      assert(isa<Function>(vf));
+      MyFunction* mf = getMyFunctionFromVector(vf, childs);
+      mf->markRet();
+      return;
+    }
+    if (vi->getOpcodeName() == "alloca") {
+      //TODO
+      return;
+    }
+    if (vi->getOpcodeName() == "load") {
+      //Found some "address" stored in memory
+      return;
+    }
+    if (isInstructionInVector(vi, globals)) {
+      return;
+    }
+
+    vi->propagated = true;
+    std::vector<MyInstruction*> dep = getUseDef(vi);
+    for (MyInstruction* mi : dep) {
+      debug(mi);
+      mi->markAsNonApprox();
+      propagateUp(mi);
     }
   }
 
@@ -390,16 +432,6 @@ private:
       }
     }
     return false;
-  }
-
-  void addGlobalVariable(Value* v) {
-    for (MyInstruction* g : globals) {
-      if (g->root == v) {
-        return;
-      }
-    }
-    MyInstruction* mi = new MyInstruction(v);
-    globals.push_back(mi);
   }
 
   // void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {
