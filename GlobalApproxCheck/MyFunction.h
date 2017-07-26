@@ -21,7 +21,7 @@ public:
   std::vector<MyInstruction*> args;
   std::vector<MyInstruction*> insts;
   std::vector<MyInstruction*> critAddrVec;
-  std::vector<MyInstruction*> global;
+  std::vector<MyInstruction*> globals;
   std::vector<MyFunction*> childs;
   std::vector<MyFunction*> parents;
   std::string name;
@@ -33,7 +33,7 @@ public:
     childs.clear();
     parents.clear();
     critAddrVec.clear();
-    global.clear();
+    globals.clear();
     initializeInstructions();
     initializeArguments();
   }
@@ -43,7 +43,7 @@ public:
     name = copy_from.name;
     args = copy_from.args;
     critAddrVec = copy_from.critAddrVec;
-    global = copy_from.global;
+    globals = copy_from.globals;
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
@@ -54,7 +54,7 @@ public:
     name = copy_from.name;
     args = copy_from.args;
     critAddrVec = copy_from.critAddrVec;
-    global = copy_from.global;
+    globals = copy_from.globals;
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
@@ -65,7 +65,7 @@ public:
     for (MyInstruction* inst : insts) {
       delete inst;
     }
-    for (MyInstruction* inst : global) {
+    for (MyInstruction* inst : globals) {
       delete inst;
     }
   }
@@ -145,7 +145,7 @@ public:
         return mi;
       }
     }
-    for (MyInstruction* mi : global) {
+    for (MyInstruction* mi : globals) {
       if (mi->root == vi) {
         return mi;
       }
@@ -239,7 +239,7 @@ public:
       vi->propagated = true;
       return;
     }
-    if (isInstructionInVector(vi, global)) {
+    if (isInstructionInVector(vi, globals)) {
       return;
     }
 
@@ -316,7 +316,7 @@ public:
       crit->print();
     }
     errs() << " *Global Variables:\n";
-    for (MyInstruction* gl : global) {
+    for (MyInstruction* gl : globals) {
       errs() << "  ";
       gl->print();
     }
@@ -393,13 +393,13 @@ private:
   }
 
   void addGlobalVariable(Value* v) {
-    for (MyInstruction* g : global) {
+    for (MyInstruction* g : globals) {
       if (g->root == v) {
         return;
       }
     }
     MyInstruction* mi = new MyInstruction(v);
-    global.push_back(mi);
+    globals.push_back(mi);
   }
 
   // void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {

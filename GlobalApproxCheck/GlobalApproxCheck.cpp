@@ -82,6 +82,12 @@ namespace {
       }
     }
 
+    void findAllUsesOfGlobalVariable(MyFunction* mf) {
+      for (MyInstruction* mi : mf->globals) {
+        mf->propagateDown(mi);
+      }
+    }
+
     /*
     * Main Pass
     */
