@@ -53,7 +53,6 @@ namespace {
         std::string oc = mi->getOpcodeName();
         if (oc == "load" || oc == "br" || oc == "load" || oc == "store") {
           mf->debug(mi);
-          mi->markAsNonApprox();
           std::vector<MyInstruction*> dep = mf->getUseDef(mi);
           for (MyInstruction* d : dep) {
             mf->debug(d);

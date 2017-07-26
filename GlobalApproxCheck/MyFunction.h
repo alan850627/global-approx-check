@@ -187,7 +187,7 @@ public:
         skipfirst = false;
       } else {
         MyInstruction* nmi = getMyInstruction(*i);
-        if (nmi != 0) {
+        if (nmi != 0 && !isa<GlobalVariable>(*i)) {
           vec.push_back(nmi);
         } else if (isa<GlobalVariable>(*i)) {
           // Might be a global variable
@@ -309,6 +309,9 @@ public:
     }
     errs() << " *Critical Addresses:\n";
     for (MyInstruction* crit : critAddrVec) {
+      if (isa<GlobalVariable>(crit->root)) {
+        errs() << "  ";
+      }
       crit->print();
     }
     errs() << " *Global Variables:\n";
