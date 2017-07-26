@@ -21,6 +21,7 @@ public:
   std::vector<MyInstruction*> args;
   std::vector<MyInstruction*> insts;
   std::vector<MyInstruction*> critAddrVec;
+  std::vector<MyInstruction*> global;
   std::vector<MyFunction*> childs;
   std::vector<MyFunction*> parents;
   std::string name;
@@ -32,6 +33,7 @@ public:
     childs.clear();
     parents.clear();
     critAddrVec.clear();
+    global.clear();
     initializeInstructions();
     initializeArguments();
   }
@@ -41,6 +43,7 @@ public:
     name = copy_from.name;
     args = copy_from.args;
     critAddrVec = copy_from.critAddrVec;
+    global = copy_from.global;
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
@@ -51,6 +54,7 @@ public:
     name = copy_from.name;
     args = copy_from.args;
     critAddrVec = copy_from.critAddrVec;
+    global = copy_from.global;
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
@@ -59,6 +63,9 @@ public:
 
   ~MyFunction() {
     for (MyInstruction* inst : insts) {
+      delete inst;
+    }
+    for (MyInstruction* inst : global) {
       delete inst;
     }
   }
@@ -74,8 +81,8 @@ public:
   void markRet() {
     for (MyInstruction* inst : insts) {
       if (inst->getOpcodeName() == "ret") {
-        inst->markAsNonApprox();
         debug(inst);
+        inst->markAsNonApprox();
       }
     }
   }
@@ -97,6 +104,7 @@ public:
                 if (isa<Instruction>(instr->getOperand(i))) {
                   MyInstruction* vi = parent->getMyInstruction(instr->getOperand(i));
                   args[i]->propagated = true;
+                  debug(vi);
                   vi->markAsNonApprox();
                   parent->propagateUp(vi);
                 }
@@ -137,6 +145,11 @@ public:
         return mi;
       }
     }
+    for (MyInstruction* mi : global) {
+      if (mi->root == vi) {
+        return mi;
+      }
+    }
     return 0;
   }
 
@@ -145,11 +158,17 @@ public:
     std::string opcode = mi->getOpcodeName();
     if (opcode == "load") {
       User::op_iterator defI = vi->op_begin();
+      if (getMyInstruction(*defI) == 0) {
+        addGlobalVariable(*defI);
+      }
       return getMyInstruction(*defI);
     }
     else if (opcode == "store") {
       User::op_iterator defI = vi->op_begin();
       defI++;
+      if (getMyInstruction(*defI) == 0) {
+        addGlobalVariable(*defI);
+      }
       return getMyInstruction(*defI);
     }
     return 0;
@@ -162,10 +181,18 @@ public:
       // instr is not a llvm::Instruction, therefore it has no usedef.
       return vec;
     }
+    bool skipfirst = mi->getOpcodeName() == "store";
     for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
-      MyInstruction* nmi = getMyInstruction(*i);
-      if (nmi != 0) {
-        vec.push_back(nmi);
+      if (skipfirst) {
+        skipfirst = false;
+      } else {
+        MyInstruction* nmi = getMyInstruction(*i);
+        if (nmi != 0) {
+          vec.push_back(nmi);
+        } else if (isa<GlobalVariable>(*i)) {
+          // Might be a global variable
+          addGlobalVariable(*i);
+        }
       }
     }
     return vec;
@@ -211,12 +238,15 @@ public:
       }
       return;
     }
+    if (isInstructionInVector(vi, global)) {
+      return;
+    }
 
     vi->propagated = true;
     std::vector<MyInstruction*> dep = getUseDef(vi);
     for (MyInstruction* mi : dep) {
-      mi->markAsNonApprox();
       debug(mi);
+      mi->markAsNonApprox();
       propagateUp(mi);
     }
   }
@@ -235,8 +265,8 @@ public:
         if(vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
           return; //the work is already done
         }
-        vi->markAsNonApprox();
         debug(vi);
+        vi->markAsNonApprox();
         propagateUp(vi);
       }
       return;
@@ -277,6 +307,15 @@ public:
     for (MyFunction* mf : childs) {
       errs() << "   -" << mf->name << "\n";
     }
+    errs() << " *Critical Addresses:\n";
+    for (MyInstruction* crit : critAddrVec) {
+      crit->print();
+    }
+    errs() << " *Global Variables:\n";
+    for (MyInstruction* gl : global) {
+      errs() << "  ";
+      gl->print();
+    }
     errs() << " *Arguments:\n";
     for (MyInstruction* arg : args) {
       arg->print();
@@ -290,6 +329,19 @@ public:
 
   void printSimple() {
     errs() << "#Function: " << name << "\n";
+  }
+
+  /*
+  * Run num cycles
+  */
+  void debug(MyInstruction* vi) {
+    if (cycle_count == 0) {
+      errs() << "**DEBUG**";
+      vi->print();
+      print();
+      std::cin >> cycle_count;
+    }
+    cycle_count -= 1;
   }
 
 private:
@@ -336,14 +388,14 @@ private:
     return false;
   }
 
-  /*
-  * Run num cycles
-  */
-  void debug(MyInstruction* vi) {
-    if (cycle_count == 0) {
-      std::cin >> cycle_count;
+  void addGlobalVariable(Value* v) {
+    for (MyInstruction* g : global) {
+      if (g->root == v) {
+        return;
+      }
     }
-    cycle_count -= 1;
+    MyInstruction* mi = new MyInstruction(v);
+    global.push_back(mi);
   }
 
   // void recurPropagateUp(MyInstruction* vi, std::vector<MyInstruction*> history) {

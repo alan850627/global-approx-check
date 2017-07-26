@@ -51,18 +51,14 @@ namespace {
     void findAddressUsageAndPropagateUp(MyFunction* mf) {
       for (MyInstruction* mi : mf->insts) {
         std::string oc = mi->getOpcodeName();
-        if (oc == "load" || oc == "br" || oc == "load") {
+        if (oc == "load" || oc == "br" || oc == "load" || oc == "store") {
+          mf->debug(mi);
+          mi->markAsNonApprox();
           std::vector<MyInstruction*> dep = mf->getUseDef(mi);
           for (MyInstruction* d : dep) {
+            mf->debug(d);
             d->markAsNonApprox();
             mf->propagateUp(d);
-          }
-        }
-        else if (oc == "store") {
-          std::vector<MyInstruction*> dep = mf->getUseDef(mi);
-          for (int i = 1; i < dep.size(); i++) {
-            dep[i]->markAsNonApprox();
-            mf->propagateUp(dep[i]);
           }
         }
       }
@@ -115,6 +111,8 @@ namespace {
 
       // GLOBAL-APPROX-CHECK ALGORITHM HERE
 
+      findAddressUsageAndPropagateUp(root);
+      findAddressBeingUsedAsData(root);
 
       // END GLOBAL-APPROX-CHECK ALGORITHM
       // Clear Memory
