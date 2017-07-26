@@ -194,6 +194,7 @@ public:
       assert(isa<Function>(vf));
       MyFunction* mf = getMyFunctionFromVector(vf, childs);
       mf->markRet();
+      return;
     }
     if (vi->getOpcodeName() == "alloca") {
       //TODO
@@ -202,7 +203,10 @@ public:
     if (vi->getOpcodeName() == "load") {
       //Found some "address" stored in memory
       MyInstruction* crit = getAddressDependency(vi);
-      critAddrVec.push_back(crit);
+      if (!isInstructionInVector(crit, critAddrVec)) {
+        critAddrVec.push_back(crit);
+      }
+      return;
     }
 
     vi->propagated = true;
@@ -221,7 +225,7 @@ public:
   void propagateDown(MyInstruction* vi) {
     if (vi->getOpcodeName() == "store") {
       MyInstruction* adddep = getAddressDependency(vi);
-      if (isInstructionInVector(adddep, critAddrVec)) {
+      if (isInstructionInVectorDeep(adddep, critAddrVec)) {
         // Found a store instruction that stores a new value into
         // critical address.
         if(vi->approxStatus == ApproxStatus::nonApproxable && vi->propagated) {
@@ -312,6 +316,15 @@ private:
   bool isInstructionInVector(MyInstruction* mi, std::vector<MyInstruction*> v) {
     for (MyInstruction* i : v) {
       if (mi == i) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool isInstructionInVectorDeep(MyInstruction* mi, std::vector<MyInstruction*> v) {
+    for (MyInstruction* i : v) {
+      if (mi->hasSameOperandsDeep(*i)) {
         return true;
       }
     }
