@@ -236,6 +236,7 @@ public:
       if (!isInstructionInVector(crit, critAddrVec)) {
         critAddrVec.push_back(crit);
       }
+      vi->propagated = true;
       return;
     }
     if (isInstructionInVector(vi, global)) {
