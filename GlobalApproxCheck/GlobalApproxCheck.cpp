@@ -54,14 +54,24 @@ namespace {
         if (oc == "load" || oc == "br" || oc == "load") {
           std::vector<MyInstruction*> dep = mf->getUseDef(mi);
           for (MyInstruction* d : dep) {
+            d->markAsNonApprox();
             mf->propagateUp(d);
           }
         }
         else if (oc == "store") {
           std::vector<MyInstruction*> dep = mf->getUseDef(mi);
           for (int i = 1; i < dep.size(); i++) {
+            dep[i]->markAsNonApprox();
             mf->propagateUp(dep[i]);
           }
+        }
+      }
+    }
+
+    void findUnpropagatedInstructionsAndPropagateUp(MyFunction* mf) {
+      for (MyInstruction* mi : mf->insts) {
+        if (mi->approxStatus == ApproxStatus::nonApproxable && !mi->propagated) {
+          mf->propagateUp(mi);
         }
       }
     }
