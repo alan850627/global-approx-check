@@ -1,0 +1,8 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+for i in "$DIR"/*.bc
+do
+  echo "$i"
+  opt -load "$DIR"/../GlobalApproxCheck/libGlobalApproxCheck.so -GlobalApproxCheck -disable-output "$i"
+done

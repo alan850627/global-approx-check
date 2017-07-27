@@ -8,7 +8,6 @@ typedef struct {
 Point pts[10];
 int ints[10];
 
-/* All Adds could be approximated */
 int main() {
   Point p;
   int arg1;

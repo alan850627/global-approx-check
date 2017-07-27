@@ -6,9 +6,3 @@ do
   echo "$i"
   clang -O0 -emit-llvm "$i" -c -o "${i%.*}".bc
 done
-
-for i in "$DIR"/*.bc
-do
-  echo "$i"
-  opt -load "$DIR"/../GlobalApproxCheck/libGlobalApproxCheck.so -GlobalApproxCheck -disable-output "$i"
-done
