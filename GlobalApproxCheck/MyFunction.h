@@ -331,7 +331,7 @@ public:
           }
           debug(use);
           use->markAsNonApprox();
-          propagateUp2(use);
+          propagateUp(use);
         }
       } else {
         propagateGlobalsDown(use);
