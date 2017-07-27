@@ -132,7 +132,6 @@ namespace {
 
       findAddressUsageAndPropagateUp(root);
       findAddressBeingUsedAsData(root);
-      findAllUsesOfGlobalVariable(root);
 
       // END GLOBAL-APPROX-CHECK ALGORITHM
       for (MyFunction* mf : allFunctions) {
