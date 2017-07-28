@@ -131,7 +131,6 @@ namespace {
       // GLOBAL-APPROX-CHECK ALGORITHM HERE
 
       findAddressUsageAndPropagateUp(root);
-      findAllUsesOfGlobalVariable(root);
       findAddressBeingUsedAsData(root);
 
       // END GLOBAL-APPROX-CHECK ALGORITHM
