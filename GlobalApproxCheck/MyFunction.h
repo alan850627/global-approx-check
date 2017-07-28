@@ -8,6 +8,7 @@
 
 #include "MyInstruction.h"
 #include "MyTypes.h"
+#include "MyHelper.h"
 
 #include <vector>
 #include <utility>
@@ -25,7 +26,6 @@ public:
   std::vector<MyFunction*> childs;
   std::vector<MyFunction*> parents;
   std::string name;
-  int cycle_count = 0;
 
   MyFunction(Function* fun) {
     root = fun;
@@ -81,8 +81,10 @@ public:
   void markRet() {
     for (MyInstruction* inst : insts) {
       if (inst->getOpcodeName() == "ret") {
+        inst->traversePts++;
         debug(inst);
         inst->markAsNonApprox();
+        inst->traversePts--;
       }
     }
   }
@@ -241,9 +243,11 @@ public:
     vi->propagated = true;
     std::vector<MyInstruction*> dep = getUseDef(vi);
     for (MyInstruction* mi : dep) {
+      mi->traversePts++;
       debug(mi);
       mi->markAsNonApprox();
       propagateUp(mi);
+      mi->traversePts--;
     }
   }
 
@@ -255,6 +259,8 @@ public:
   void propagateDown(MyInstruction* vi) {
     std::vector<MyInstruction*> uses = getDefUse(vi);
     for (MyInstruction* use : uses) {
+      use->traversePts++;
+      debug(use);
       if (use->getOpcodeName() == "call") {
         // continue to propagate in child?
         // 1) Find out which argument is being linked
@@ -283,16 +289,15 @@ public:
         if (isCritical) {
           // Found a store instruction that stores a new value into
           // critical address.
-          if(use->approxStatus == ApproxStatus::nonApproxable && use->propagated) {
-            return; //the work is already done
+          if(!(use->approxStatus == ApproxStatus::nonApproxable && use->propagated)) {
+            use->markAsNonApprox();
+            propagateUp(use);
           }
-          debug(use);
-          use->markAsNonApprox();
-          propagateUp2(use);
         }
       } else {
         propagateDown(use);
       }
+      use->traversePts--;
     }
   }
 
@@ -304,6 +309,8 @@ public:
   void propagateGlobalsDown(MyInstruction* vi) {
     std::vector<MyInstruction*> uses = getDefUse(vi);
     for (MyInstruction* use : uses) {
+      use->traversePts++;
+      debug(use);
       if (use->getOpcodeName() == "call") {
         // continue to propagate in child?
         // 1) Find out which argument is being linked
@@ -326,16 +333,15 @@ public:
         if (adddep == vi) {
           // Found a store instruction that stores a new value into
           // critical address.
-          if(use->approxStatus == ApproxStatus::nonApproxable && use->propagated) {
-            return; //the work is already done
+          if(!(use->approxStatus == ApproxStatus::nonApproxable && use->propagated)) {
+            use->markAsNonApprox();
+            propagateUp(use);
           }
-          debug(use);
-          use->markAsNonApprox();
-          propagateUp(use);
         }
       } else {
         propagateGlobalsDown(use);
       }
+      use->traversePts--;
     }
   }
 
@@ -450,9 +456,11 @@ private:
     vi->propagated = true;
     std::vector<MyInstruction*> dep = getUseDef(vi);
     for (MyInstruction* mi : dep) {
+      mi->traversePts++;
       debug(mi);
       mi->markAsNonApprox();
       propagateUp2(mi);
+      mi->traversePts--;
     }
   }
 

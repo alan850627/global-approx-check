@@ -10,7 +10,6 @@
 #include "MyTypes.h"
 #include "MyInstruction.h"
 #include "MyFunction.h"
-#include "MyAlgorithms.h"
 
 #include <vector>
 #include <utility>
@@ -27,6 +26,19 @@ namespace {
     std::vector<MyFunction*> allFunctions;
     std::vector<MyFunction*> stack;
 
+    /*
+    * Checks whether the Function is in the vector or not.
+    * If it is, it will return the index that contains.
+    * if not, it will return -1.
+    */
+    int getFunctionIndex(std::vector<MyFunction*> v, Function* f) {
+      for (int i = 0; i < v.size(); i++) {
+        if (v[i]->root == f) {
+          return i;
+        }
+      }
+      return -1;
+    }
 
     /*
     * Load child functions
@@ -52,27 +64,35 @@ namespace {
       for (MyInstruction* mi : mf->insts) {
         std::string oc = mi->getOpcodeName();
         if (oc == "load" || oc == "br" || oc == "load") {
+          mi->traversePts++;
           mf->debug(mi);
           std::vector<MyInstruction*> dep = mf->getUseDef(mi);
           for (MyInstruction* d : dep) {
+            d->traversePts++;
             mf->debug(d);
             d->markAsNonApprox();
             mf->propagateUp(d);
+            d->traversePts--;
           }
+          mi->traversePts--;
         } else if (oc == "store") {
+          mi->traversePts++;
           mf->debug(mi);
           Instruction* instr = mi->getInstruction();
           for (User::op_iterator i = instr->op_begin() + 1; i != instr->op_end(); i++) {
             MyInstruction* nmi = mf->getMyInstruction(*i);
             if (nmi != 0 && !isa<GlobalVariable>(*i)) {
+              nmi->traversePts++;
               mf->debug(nmi);
               nmi->markAsNonApprox();
               mf->propagateUp(nmi);
+              nmi->traversePts--;
             } else if (isa<GlobalVariable>(*i)) {
               // Might be a global variable
               mf->addGlobalVariable(*i);
             }
           }
+          mi->traversePts--;
         }
       }
     }
@@ -80,25 +100,38 @@ namespace {
     void findUnpropagatedInstructionsAndPropagateUp(MyFunction* mf) {
       for (MyInstruction* mi : mf->insts) {
         if (mi->approxStatus == ApproxStatus::nonApproxable && !mi->propagated) {
+          mi->traversePts++;
+          mf->debug(mi);
           mf->propagateUp(mi);
+          mi->traversePts--;
         }
       }
     }
 
     void findAddressBeingUsedAsData(MyFunction* mf) {
-      for (MyInstruction* mi : mf->critAddrVec) {
+      std::vector<MyInstruction*> cav = mf->critAddrVec;
+      for (MyInstruction* mi : cav) {
+        mi->traversePts++;
+        mf->debug(mi);
         mf->propagateDown(mi);
         for (MyInstruction* comp : mf->insts) {
-          if (mi->getOpcodeName() != "alloca" && mi->hasSameOperands(*comp)) {
+          if (mi->getOpcodeName() != "alloca" && mi->hasSameOperands(*comp) && (comp != mi)) {
+            comp->traversePts++;
+            mf->debug(comp);
             mf->propagateDown(comp);
+            comp->traversePts--;
           }
         }
+        mi->traversePts--;
       }
     }
 
     void findAllUsesOfGlobalVariable(MyFunction* mf) {
       for (MyInstruction* mi : mf->globals) {
+        mi->traversePts++;
+        mf->debug(mi);
         mf->propagateGlobalsDown(mi);
+        mi->traversePts--;
       }
     }
 
@@ -131,6 +164,8 @@ namespace {
       // GLOBAL-APPROX-CHECK ALGORITHM HERE
 
       findAddressUsageAndPropagateUp(root);
+      findAddressBeingUsedAsData(root);
+      findAddressBeingUsedAsData(root);
       findAddressBeingUsedAsData(root);
 
       // END GLOBAL-APPROX-CHECK ALGORITHM
