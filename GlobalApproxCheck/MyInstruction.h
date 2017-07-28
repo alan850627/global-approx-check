@@ -17,30 +17,35 @@ class MyInstruction {
 public:
   Value* root;
   ApproxStatus approxStatus;
+  int traversePts;
   bool propagated;
 
   MyInstruction(Instruction* in) {
     root = (Value*)in;
     approxStatus = ApproxStatus::pending;
     propagated = false;
+    traversePts = 0;
   }
 
   MyInstruction(Value* in) {
     root = in;
     approxStatus = ApproxStatus::pending;
     propagated = false;
+    traversePts = 0;
   }
 
   MyInstruction(const MyInstruction& copy_from) {
     root = copy_from.root;
     approxStatus = copy_from.approxStatus;
     propagated = copy_from.propagated;
+    traversePts = copy_from.traversePts;
   }
 
   MyInstruction& operator=(const MyInstruction& copy_from) {
     root = copy_from.root;
     approxStatus = copy_from.approxStatus;
     propagated = copy_from.propagated;
+    traversePts = copy_from.traversePts;
     return *this;
   }
 
@@ -91,15 +96,18 @@ public:
   }
 
   void print() {
+    for (int i = 0; i < traversePts; i++) {
+      errs () << "=";
+    }
     switch (approxStatus) {
       case ApproxStatus::approxable:
-        errs() << *root << " //Status: " << "Approxable\n";
+        errs() << *root << " //Approxable\n";
         break;
       case ApproxStatus::nonApproxable:
-        errs() << *root << " //Status: " << "Not Approxable //Propagated: " << propagated << "\n";
+        errs() << *root << " //NotApproxable:" << propagated << "\n";
         break;
       case ApproxStatus::pending:
-        errs() << *root << " //Status: " << "Pending\n";
+        errs() << *root << " \n";
         break;
     }
   }

@@ -22,4 +22,3 @@ int main(void) {
   x[a] = d[2];
   return c;
 }
-

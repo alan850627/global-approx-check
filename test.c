@@ -7,6 +7,7 @@ void foo (int* a) {
   int c = 1;
   c = c + 10;
   *a = c;
+  x[*a] = 1;
 }
 
 int main(void) {
