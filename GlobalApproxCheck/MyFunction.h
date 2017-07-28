@@ -106,9 +106,11 @@ public:
                 if (isa<Instruction>(instr->getOperand(i))) {
                   MyInstruction* vi = parent->getMyInstruction(instr->getOperand(i));
                   args[i]->propagated = true;
+                  vi->traversePts++;
                   parent->debug(vi);
                   vi->markAsNonApprox();
                   parent->propagateUp(vi);
+                  vi->traversePts--;
                 }
               }
             }
@@ -119,8 +121,10 @@ public:
   }
 
   void propagateFromParent(int arg_num) {
-    MyInstruction* mi = args[arg_num];
-    critAddrVec.push_back(mi);
+    MyInstruction* crit = args[arg_num];
+    if (!isInstructionInVector(crit, critAddrVec)) {
+      critAddrVec.push_back(crit);
+    }
   }
 
   MyFunction* getChild(std::string n) {
@@ -387,7 +391,7 @@ public:
   */
   void debug(MyInstruction* vi) {
     if (cycle_count == 0) {
-      errs() << "**DEBUG**";
+      errs() << "**DEBUG";
       vi->print();
       print();
       std::cin >> cycle_count;

@@ -147,6 +147,7 @@ namespace {
       }
       findUnpropagatedInstructionsAndPropagateUp(mf);
       findAddressBeingUsedAsData(mf);
+      mf->propagateToParent();
       stack.pop_back();
     }
 
