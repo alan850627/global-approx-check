@@ -8,6 +8,7 @@
 
 #include "MyInstruction.h"
 #include "MyTypes.h"
+#include "MyHelper.h"
 
 #include <vector>
 #include <utility>
@@ -25,7 +26,6 @@ public:
   std::vector<MyFunction*> childs;
   std::vector<MyFunction*> parents;
   std::string name;
-  int cycle_count = 0;
 
   MyFunction(Function* fun) {
     root = fun;

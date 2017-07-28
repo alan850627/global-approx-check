@@ -10,7 +10,6 @@
 #include "MyTypes.h"
 #include "MyInstruction.h"
 #include "MyFunction.h"
-#include "MyAlgorithms.h"
 
 #include <vector>
 #include <utility>
@@ -27,6 +26,19 @@ namespace {
     std::vector<MyFunction*> allFunctions;
     std::vector<MyFunction*> stack;
 
+    /*
+    * Checks whether the Function is in the vector or not.
+    * If it is, it will return the index that contains.
+    * if not, it will return -1.
+    */
+    int getFunctionIndex(std::vector<MyFunction*> v, Function* f) {
+      for (int i = 0; i < v.size(); i++) {
+        if (v[i]->root == f) {
+          return i;
+        }
+      }
+      return -1;
+    }
 
     /*
     * Load child functions
