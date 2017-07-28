@@ -120,7 +120,7 @@ public:
 
   void propagateFromParent(int arg_num) {
     MyInstruction* mi = args[arg_num];
-    propagateDown(mi);
+    critAddrVec.push_back(mi);
   }
 
   MyFunction* getChild(std::string n) {

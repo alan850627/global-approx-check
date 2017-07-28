@@ -135,6 +135,11 @@ namespace {
       }
     }
 
+    void analyzeFunction(MyFunction* mf) {
+      findAddressUsageAndPropagateUp(mf);
+      findAddressBeingUsedAsData(mf);
+    }
+
     /*
     * Main Pass
     */
@@ -163,10 +168,7 @@ namespace {
 
       // GLOBAL-APPROX-CHECK ALGORITHM HERE
 
-      findAddressUsageAndPropagateUp(root);
-      findAddressBeingUsedAsData(root);
-      findAddressBeingUsedAsData(root);
-      findAddressBeingUsedAsData(root);
+      
 
       // END GLOBAL-APPROX-CHECK ALGORITHM
       for (MyFunction* mf : allFunctions) {
