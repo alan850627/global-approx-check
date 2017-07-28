@@ -136,8 +136,18 @@ namespace {
     }
 
     void analyzeFunction(MyFunction* mf) {
+      if (getFunctionIndex(stack, mf->root) != -1) {
+        return;
+      }
+      stack.push_back(mf);
       findAddressUsageAndPropagateUp(mf);
       findAddressBeingUsedAsData(mf);
+      for (MyFunction* child : mf->childs) {
+        analyzeFunction(child);
+      }
+      findUnpropagatedInstructionsAndPropagateUp(mf);
+      findAddressBeingUsedAsData(mf);
+      stack.pop_back();
     }
 
     /*
@@ -167,10 +177,11 @@ namespace {
       loadChildFunctions(root, cgn);
 
       // GLOBAL-APPROX-CHECK ALGORITHM HERE
+      analyzeFunction(root);
 
-      
 
       // END GLOBAL-APPROX-CHECK ALGORITHM
+      errs() << "==ANALYSIS COMPLETE==\n";
       for (MyFunction* mf : allFunctions) {
         mf->print();
       }
