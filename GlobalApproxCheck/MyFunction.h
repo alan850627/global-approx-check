@@ -100,6 +100,7 @@ public:
           Value *f = instr->getOperand(instr->getNumOperands() - 1); // the function is always the last element.
           assert(isa<Function>(f));
           if (f == root) {
+            inst->traversePts++;
             for (int i = 0; i < args.size(); i++) {
               if (args[i]->approxStatus == ApproxStatus::nonApproxable && !args[i]->propagated) {
                 // Propagate this info to parent
@@ -114,6 +115,7 @@ public:
                 }
               }
             }
+            inst->traversePts--;
           }
         }
       }
@@ -123,7 +125,11 @@ public:
   void propagateFromParent(int arg_num) {
     MyInstruction* crit = args[arg_num];
     if (!isInstructionInVector(crit, critAddrVec)) {
+      crit->traversePts++;
+      debug(crit);
       critAddrVec.push_back(crit);
+      crit->markAsNonApprox();
+      crit->traversePts--;
     }
   }
 
@@ -234,6 +240,17 @@ public:
     if (vi->getOpcodeName() == "load") {
       //Found some "address" stored in memory
       MyInstruction* crit = getAddressDependency(vi);
+      // We don't want to mark alloca instructions unless they are "critical".
+      // Since for each "use" (aka load) instruction, the alloca instructions
+      // will be referenced as a pointer. At the same time, we also use alloca
+      // instructions as function arguments, so marking them this will cause
+      // propagateToParent function propagate approxable information.
+      if (crit->getOpcodeName() == "alloca") {
+        crit->traversePts++;
+        debug(crit);
+        crit->markAsNonApprox();
+        crit->traversePts--;
+      }
       if (!isInstructionInVector(crit, critAddrVec)) {
         critAddrVec.push_back(crit);
       }
@@ -247,11 +264,18 @@ public:
     vi->propagated = true;
     std::vector<MyInstruction*> dep = getUseDef(vi);
     for (MyInstruction* mi : dep) {
-      mi->traversePts++;
-      debug(mi);
-      mi->markAsNonApprox();
-      propagateUp(mi);
-      mi->traversePts--;
+      // We don't want to mark alloca instructions unless they are "critical".
+      // Since for each "use" (aka load) instruction, the alloca instructions
+      // will be referenced as a pointer. At the same time, we also use alloca
+      // instructions as function arguments, so marking them this will cause
+      // propagateToParent function propagate approxable information.
+      if (mi->getOpcodeName() != "alloca") {
+        mi->traversePts++;
+        debug(mi);
+        mi->markAsNonApprox();
+        propagateUp(mi);
+        mi->traversePts--;
+      }
     }
   }
 
@@ -460,11 +484,18 @@ private:
     vi->propagated = true;
     std::vector<MyInstruction*> dep = getUseDef(vi);
     for (MyInstruction* mi : dep) {
-      mi->traversePts++;
-      debug(mi);
-      mi->markAsNonApprox();
-      propagateUp2(mi);
-      mi->traversePts--;
+      // We don't want to mark alloca instructions unless they are "critical".
+      // Since for each "use" (aka load) instruction, the alloca instructions
+      // will be referenced as a pointer. At the same time, we also use alloca
+      // instructions as function arguments, so marking them this will cause
+      // propagateToParent function propagate approxable information.
+      if (mi->getOpcodeName() != "alloca") {
+        mi->traversePts++;
+        debug(mi);
+        mi->markAsNonApprox();
+        propagateUp2(mi);
+        mi->traversePts--;
+      }
     }
   }
 

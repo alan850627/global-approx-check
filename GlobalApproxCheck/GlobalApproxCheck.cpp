@@ -61,6 +61,7 @@ namespace {
     }
 
     void findAddressUsageAndPropagateUp(MyFunction* mf) {
+      int storeCount = 0;
       for (MyInstruction* mi : mf->insts) {
         std::string oc = mi->getOpcodeName();
         if (oc == "load" || oc == "br" || oc == "load") {
@@ -68,11 +69,18 @@ namespace {
           mf->debug(mi);
           std::vector<MyInstruction*> dep = mf->getUseDef(mi);
           for (MyInstruction* d : dep) {
-            d->traversePts++;
-            mf->debug(d);
-            d->markAsNonApprox();
-            mf->propagateUp(d);
-            d->traversePts--;
+            // We don't want to mark alloca instructions unless they are "critical".
+            // Since for each "use" (aka load) instruction, the alloca instructions
+            // will be referenced as a pointer. At the same time, we also use alloca
+            // instructions as function arguments, so marking them this will cause
+            // propagateToParent function propagate approxable information.
+            if (d->getOpcodeName() != "alloca") {
+              d->traversePts++;
+              mf->debug(d);
+              d->markAsNonApprox();
+              mf->propagateUp(d);
+              d->traversePts--;
+            }
           }
           mi->traversePts--;
         } else if (oc == "store") {
@@ -82,11 +90,18 @@ namespace {
           for (User::op_iterator i = instr->op_begin() + 1; i != instr->op_end(); i++) {
             MyInstruction* nmi = mf->getMyInstruction(*i);
             if (nmi != 0 && !isa<GlobalVariable>(*i)) {
-              nmi->traversePts++;
-              mf->debug(nmi);
-              nmi->markAsNonApprox();
-              mf->propagateUp(nmi);
-              nmi->traversePts--;
+              // We don't want to mark alloca instructions unless they are "critical".
+              // Since for each "use" (aka load) instruction, the alloca instructions
+              // will be referenced as a pointer. At the same time, we also use alloca
+              // instructions as function arguments, so marking them this will cause
+              // propagateToParent function propagate approxable information.
+              if (nmi->getOpcodeName() != "alloca") {
+                nmi->traversePts++;
+                mf->debug(nmi);
+                nmi->markAsNonApprox();
+                mf->propagateUp(nmi);
+                nmi->traversePts--;
+              }
             } else if (isa<GlobalVariable>(*i)) {
               // Might be a global variable
               mf->addGlobalVariable(*i);
@@ -179,10 +194,13 @@ namespace {
 
       // GLOBAL-APPROX-CHECK ALGORITHM HERE
       analyzeFunction(root);
+      for (MyFunction* mf : allFunctions) {
+        analyzeFunction(mf);
+      }
 
 
       // END GLOBAL-APPROX-CHECK ALGORITHM
-      errs() << "==ANALYSIS COMPLETE==\n";
+      errs() << M.getName() << " ANALYSIS COMPLETE\n";
       for (MyFunction* mf : allFunctions) {
         mf->print();
       }

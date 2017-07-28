@@ -28,7 +28,7 @@ int main(void) {
   @x = global [6 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4, i32 5], align 16
  *Arguments:
  *Instructions:
-  %1 = alloca i32, align 4 //NotApproxable:0
+  %1 = alloca i32, align 4
   %2 = alloca i32, align 4 //NotApproxable:0
   store i32 0, i32* %1, align 4
   store i32 10, i32* %2, align 4 //NotApproxable:1
@@ -44,14 +44,13 @@ int main(void) {
    -main
  *Childs:
  *Critical Addresses:
-  %2 = alloca i32*, align 8 //NotApproxable:0
+  %2 = alloca i32*, align 8 //NotApproxable:1
   %8 = load i32*, i32** %2, align 8 //NotApproxable:1
   %3 = alloca i32, align 4 //NotApproxable:0
-  %2 = alloca i32*, align 8 //NotApproxable:0
  *Global Variables:
   @x = global [6 x i32] [i32 0, i32 1, i32 2, i32 3, i32 4, i32 5], align 16
  *Arguments:
-  %2 = alloca i32*, align 8 //NotApproxable:0
+  %2 = alloca i32*, align 8 //NotApproxable:1
  *Instructions:
   %3 = alloca i32, align 4 //NotApproxable:0
   store i32* %0, i32** %2, align 8 //NotApproxable:1
@@ -67,5 +66,6 @@ int main(void) {
   %10 = sext i32 %9 to i64 //NotApproxable:1
   %11 = getelementptr inbounds [6 x i32], [6 x i32]* @x, i64 0, i64 %10 //NotApproxable:1
   store i32 1, i32* %11, align 4
-  ret void
+  ret void 
+
   */
