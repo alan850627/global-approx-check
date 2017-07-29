@@ -64,7 +64,7 @@ namespace {
       int storeCount = 0;
       for (MyInstruction* mi : mf->insts) {
         std::string oc = mi->getOpcodeName();
-        if (oc == "load" || oc == "br" || oc == "load") {
+        if (oc == "load" || oc == "br") {
           mi->traversePts++;
           mf->debug(mi);
           std::vector<MyInstruction*> dep = mf->getUseDef(mi);
