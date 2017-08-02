@@ -228,6 +228,9 @@ public:
       //TODO
       return;
     }
+    if (isInstructionInVector(vi, globals)) {
+      return;
+    }
     if (vi->getOpcodeName() == "load") {
       //Found some "address" stored in memory
       MyInstruction* crit = getAddressDependency(vi);
@@ -236,7 +239,7 @@ public:
       // will be referenced as a pointer. At the same time, we also use alloca
       // instructions as function arguments, so marking them this will cause
       // propagateToParent function propagate approxable information.
-      if (crit->getOpcodeName() == "alloca") {
+      if (crit->getOpcodeName() == "alloca" || isInstructionInVector(crit, globals)) {
         crit->traversePts++;
         debug(crit);
         crit->markAsNonApprox();
@@ -260,7 +263,7 @@ public:
       // will be referenced as a pointer. At the same time, we also use alloca
       // instructions as function arguments, so marking them this will cause
       // propagateToParent function propagate approxable information.
-      if (mi->getOpcodeName() != "alloca") {
+      if (mi->getOpcodeName() != "alloca" && !isInstructionInVector(mi, globals)) {
         mi->traversePts++;
         debug(mi);
         mi->markAsNonApprox();
@@ -464,6 +467,9 @@ private:
       //TODO
       return;
     }
+    if (isInstructionInVector(vi, globals)) {
+      return;
+    }
     if (vi->getOpcodeName() == "load") {
       //Found some "address" stored in memory
       return;
@@ -480,7 +486,7 @@ private:
       // will be referenced as a pointer. At the same time, we also use alloca
       // instructions as function arguments, so marking them this will cause
       // propagateToParent function propagate approxable information.
-      if (mi->getOpcodeName() != "alloca") {
+      if (mi->getOpcodeName() != "alloca" && !isInstructionInVector(mi, globals)) {
         mi->traversePts++;
         debug(mi);
         mi->markAsNonApprox();
