@@ -151,10 +151,12 @@ namespace {
 
     void findAllUsesOfGlobalVariable(MyFunction* mf) {
       for (MyInstruction* mi : mf->globals) {
-        mi->traversePts++;
-        mf->debug(mi);
-        mf->propagateGlobalsDown(mi);
-        mi->traversePts--;
+        if (mi->approxStatus == ApproxStatus::nonApproxable) {
+          mi->traversePts++;
+          mf->debug(mi);
+          mf->propagateDown(mi);
+          mi->traversePts--;
+        }
       }
     }
 
@@ -165,11 +167,13 @@ namespace {
       stack.push_back(mf);
       findAddressUsageAndPropagateUp(mf);
       findAddressBeingUsedAsData(mf);
+      findAllUsesOfGlobalVariable(mf);
       for (MyFunction* child : mf->childs) {
         analyzeFunction(child);
       }
       findUnpropagatedInstructionsAndPropagateUp(mf);
       findAddressBeingUsedAsData(mf);
+      findAllUsesOfGlobalVariable(mf);
       mf->propagateToParent();
       stack.pop_back();
     }
