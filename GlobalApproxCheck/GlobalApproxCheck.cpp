@@ -60,6 +60,14 @@ namespace {
       }
     }
 
+    void setupGlobals(Module &M) {
+      for (MyFunction* f : allFunctions) {
+        for (Module::global_iterator i = M.global_begin(); i != M.global_end(); i++) {
+          f->addGlobalVariable(&*i);
+        }
+      }
+    }
+
     void findAddressUsageAndPropagateUp(MyFunction* mf) {
       int storeCount = 0;
       for (MyInstruction* mi : mf->insts) {
@@ -191,6 +199,7 @@ namespace {
 
       // Get info out of callgraph.
       loadChildFunctions(root, cgn);
+      setupGlobals(M);
 
       // GLOBAL-APPROX-CHECK ALGORITHM HERE
       analyzeFunction(root);
