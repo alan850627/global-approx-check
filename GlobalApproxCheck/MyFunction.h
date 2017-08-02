@@ -170,17 +170,11 @@ public:
     std::string opcode = mi->getOpcodeName();
     if (opcode == "load") {
       User::op_iterator defI = vi->op_begin();
-      if (getMyInstruction(*defI) == 0) {
-        addGlobalVariable(*defI);
-      }
       return getMyInstruction(*defI);
     }
     else if (opcode == "store") {
       User::op_iterator defI = vi->op_begin();
       defI++;
-      if (getMyInstruction(*defI) == 0) {
-        addGlobalVariable(*defI);
-      }
       return getMyInstruction(*defI);
     }
     return 0;
@@ -195,11 +189,8 @@ public:
     }
     for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
       MyInstruction* nmi = getMyInstruction(*i);
-      if (nmi != 0 && !isa<GlobalVariable>(*i)) {
+      if (nmi != 0) {
         vec.push_back(nmi);
-      } else if (isa<GlobalVariable>(*i)) {
-        // Might be a global variable
-        addGlobalVariable(*i);
       }
     }
     return vec;
