@@ -25,6 +25,7 @@ namespace {
     // Global Variables
     std::vector<MyFunction*> allFunctions;
     std::vector<MyFunction*> stack;
+    std::vector<MyInstruction*> globals;
 
     /*
     * Checks whether the Function is in the vector or not.
@@ -61,10 +62,11 @@ namespace {
     }
 
     void setupGlobals(Module &M) {
+      for (Module::global_iterator i = M.global_begin(); i != M.global_end(); i++) {
+        globals.push_back(new MyInstruction(&*i));
+      }
       for (MyFunction* f : allFunctions) {
-        for (Module::global_iterator i = M.global_begin(); i != M.global_end(); i++) {
-          f->addGlobalVariable(&*i);
-        }
+        f->globals = this->globals;
       }
     }
 
@@ -82,7 +84,7 @@ namespace {
             // will be referenced as a pointer. At the same time, we also use alloca
             // instructions as function arguments, so marking them this will cause
             // propagateToParent function propagate approxable information.
-            if (d->getOpcodeName() != "alloca") {
+            if (d->getOpcodeName() != "alloca" && !isa<GlobalVariable>(d->root)) {
               d->traversePts++;
               mf->debug(d);
               d->markAsNonApprox();
@@ -154,7 +156,7 @@ namespace {
         if (mi->approxStatus == ApproxStatus::nonApproxable) {
           mi->traversePts++;
           mf->debug(mi);
-          mf->propagateDown(mi);
+          mf->propagateGlobalsDown(mi);
           mi->traversePts--;
         }
       }
@@ -220,6 +222,9 @@ namespace {
       // Clear Memory
       for (MyFunction* mf : allFunctions) {
         delete mf;
+      }
+      for (MyInstruction* g : globals) {
+        delete g;
       }
       return false;
     };

@@ -65,9 +65,6 @@ public:
     for (MyInstruction* inst : insts) {
       delete inst;
     }
-    for (MyInstruction* inst : globals) {
-      delete inst;
-    }
   }
 
   bool operator==(const MyFunction& mf) {
