@@ -76,12 +76,20 @@ namespace {
       }
       for (MyFunction* f : allFunctions) {
         for (MyInstruction* mi : f->insts) {
-          Instruction* vi = mi->getInstruction();
-          for (User::op_iterator defI = vi->op_begin(); defI != vi->op_end(); defI++) {
-            if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
-              //TODO Isolate the non-instruction "getelementptr" thingies
-            }
-          }
+	  if (mi->getOpcodeName() == "load") {
+	    Instruction* vi = mi->getInstruction();
+	    User::op_iterator defI = vi->op_begin();
+	    if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
+	      globals.push_back(new MyInstruction(*defI));
+	    }
+	  } else if (mi->getOpcodeName() == "store") {
+            Instruction* vi = mi->getInstruction();
+	    User::op_iterator defI = vi->op_begin();
+	    defI++;
+	    if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
+	      globals.push_back(new MyInstruction(*defI));
+	    }
+	  }
         }
       }
       for (MyFunction* f : allFunctions) {
@@ -103,7 +111,7 @@ namespace {
             // will be referenced as a pointer. At the same time, we also use alloca
             // instructions as function arguments, so marking them this will cause
             // propagateToParent function propagate approxable information.
-            if (d->getOpcodeName() != "alloca" && !isa<GlobalVariable>(d->root)) {
+            if (d->getOpcodeName() != "alloca" && getInstructionIndex(globals, d->root) == -1) {
               d->traversePts++;
               mf->debug(d);
               d->markAsNonApprox();
@@ -118,7 +126,7 @@ namespace {
           Instruction* instr = mi->getInstruction();
           for (User::op_iterator i = instr->op_begin() + 1; i != instr->op_end(); i++) {
             MyInstruction* nmi = mf->getMyInstruction(*i);
-            if (nmi != 0 && !isa<GlobalVariable>(*i)) {
+            if (nmi != 0 && getInstructionIndex(globals, nmi->root) == -1) {
               // We don't want to mark alloca instructions unless they are "critical".
               // Since for each "use" (aka load) instruction, the alloca instructions
               // will be referenced as a pointer. At the same time, we also use alloca

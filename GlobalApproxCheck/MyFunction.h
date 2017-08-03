@@ -300,7 +300,7 @@ public:
       } else if (use->getOpcodeName() == "store") {
         MyInstruction* adddep = getAddressDependency(use);
         bool isCritical;
-        if (isa<GlobalVariable>(adddep->root) || adddep->getOpcodeName() == "alloca") {
+        if (isInstructionInVector(adddep, globals) || adddep->getOpcodeName() == "alloca") {
           isCritical = isInstructionInVector(adddep, critAddrVec);
         } else {
           isCritical = isInstructionInVectorDeep(adddep, critAddrVec);
@@ -376,7 +376,7 @@ public:
     }
     errs() << " *Critical Addresses:\n";
     for (MyInstruction* crit : critAddrVec) {
-      if (isa<GlobalVariable>(crit->root)) {
+      if (isInstructionInVector(crit, globals)) {
         errs() << "  ";
       }
       crit->print();
