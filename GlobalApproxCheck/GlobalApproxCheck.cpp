@@ -41,6 +41,15 @@ namespace {
       return -1;
     }
 
+    int getInstructionIndex(std::vector<MyInstruction*> v, Value* vi) {
+      for (int i = 0; i < v.size(); i++) {
+        if(v[i]->root == vi) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
     /*
     * Load child functions
     */
@@ -64,6 +73,16 @@ namespace {
     void setupGlobals(Module &M) {
       for (Module::global_iterator i = M.global_begin(); i != M.global_end(); i++) {
         globals.push_back(new MyInstruction(&*i));
+      }
+      for (MyFunction* f : allFunctions) {
+        for (MyInstruction* mi : f->insts) {
+          Instruction* vi = mi->getInstruction();
+          for (User::op_iterator defI = vi->op_begin(); defI != vi->op_end(); defI++) {
+            if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
+              //TODO Isolate the non-instruction "getelementptr" thingies
+            }
+          }
+        }
       }
       for (MyFunction* f : allFunctions) {
         f->globals = this->globals;
