@@ -60,8 +60,10 @@ namespace {
           MyFunction* mf = new MyFunction((*cgn)[i]->getFunction());
           allFunctions.push_back(mf);
           root->childs.push_back(mf);
-          mf->parents.push_back(root);
-          loadChildFunctions(mf, (*cgn)[i]);
+          if (!mf->outside) {
+            mf->parents.push_back(root);
+            loadChildFunctions(mf, (*cgn)[i]);
+          }
         } else {
           MyFunction* mf = allFunctions[j];
           root->childs.push_back(mf);

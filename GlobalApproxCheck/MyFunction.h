@@ -39,6 +39,8 @@ public:
     inst_iterator ii = inst_begin(*root);
     if ((&*ii) == 0) {
       outside = true;
+      args.clear();
+      insts.clear();
     } else {
       outside = false;
       initializeInstructions();
