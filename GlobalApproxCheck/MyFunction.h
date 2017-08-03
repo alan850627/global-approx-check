@@ -26,6 +26,7 @@ public:
   std::vector<MyFunction*> childs;
   std::vector<MyFunction*> parents;
   std::string name;
+  bool outside;
 
   MyFunction(Function* fun) {
     root = fun;
@@ -34,8 +35,15 @@ public:
     parents.clear();
     critAddrVec.clear();
     globals.clear();
-    initializeInstructions();
-    initializeArguments();
+
+    inst_iterator ii = inst_begin(*root);
+    if ((&*ii) == 0) {
+      outside = true;
+    } else {
+      outside = false;
+      initializeInstructions();
+      initializeArguments();
+    }
   }
 
   MyFunction(const MyFunction& copy_from) {
@@ -47,6 +55,7 @@ public:
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
+    outside = copy_from.outside;
   }
 
   MyFunction& operator=(const MyFunction& copy_from) {
@@ -58,6 +67,7 @@ public:
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
+    outside = copy_from.outside;
     return *this;
   }
 
