@@ -37,7 +37,7 @@ public:
     globals.clear();
 
     inst_iterator ii = inst_begin(*root);
-    if ((&*ii) == 0) {
+    if (ii == inst_end(*root)) {
       outside = true;
       args.clear();
       insts.clear();
