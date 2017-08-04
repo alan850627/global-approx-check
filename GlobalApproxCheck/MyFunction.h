@@ -311,17 +311,27 @@ public:
         // 2) Get the function
         // 3) Call that function's propagateDown
         Value* vf = use->getInstruction()->getOperand(use->getInstruction()->getNumOperands() - 1); // the function is always the last element.
-        MyFunction* mf = getMyFunctionFromVector(vf, childs);
-        for (int i = 0; i < use->getInstruction()->getNumOperands(); i++) {
-          Value* v = use->getInstruction()->getOperand(i);
-          if (isa<Instruction>(v)) {
-            Instruction* ii = dyn_cast<Instruction>(v);
-            if (ii == vi->root) {
-              //Found the argument dependency
-              mf->propagateFromParent(i);
+        assert(isa<Function>(vf));
+        Function* f = dyn_cast<Function>(vf);
+        if (f->isIntrinsic()) {
+          propagateDown(use);
+        } else {
+          MyFunction* mf = getMyFunctionFromVector(vf, childs);
+          if (mf->outside) {
+            propagateDown(use);
+          } else {
+            for (int i = 0; i < use->getInstruction()->getNumOperands(); i++) {
+              Value* v = use->getInstruction()->getOperand(i);
+              if (isa<Instruction>(v)) {
+                Instruction* ii = dyn_cast<Instruction>(v);
+                if (ii == vi->root) {
+                  //Found the argument dependency
+                  mf->propagateFromParent(i);
+                }
+              }
             }
           }
-        }
+        } 
       } else if (use->getOpcodeName() == "store") {
         MyInstruction* adddep = getAddressDependency(use);
         bool isCritical;
