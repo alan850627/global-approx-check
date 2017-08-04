@@ -81,9 +81,9 @@ namespace {
        	  if (mi->getOpcodeName() == "load") {
 	           Instruction* vi = mi->getInstruction();
 	           User::op_iterator defI = vi->op_begin();
-	             if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
-	               globals.push_back(new MyInstruction(*defI));
-	             }
+	           if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
+	             globals.push_back(new MyInstruction(*defI));
+	           }
           } else if (mi->getOpcodeName() == "store") {
             Instruction* vi = mi->getInstruction();
 	          User::op_iterator defI = vi->op_begin();
@@ -262,13 +262,37 @@ namespace {
       for (MyFunction* mf : allFunctions) {
         analyzeFunction(mf);
       }
-
-
       // END GLOBAL-APPROX-CHECK ALGORITHM
-      errs() << M.getName() << " ANALYSIS COMPLETE\n";
+
+      // Edit the approxable adds, muls, and subs for fun
       for (MyFunction* mf : allFunctions) {
-        mf->print();
+        for (MyInstruction* mi : mf->insts) {
+          if (mi->approxStatus == ApproxStatus::pending) {
+            if (mi->getOpcodeName() == "add") {
+              BinaryOperator* ni = BinaryOperator::Create(
+                  Instruction::Mul, 
+                  mi->getInstruction()->getOperand(0), 
+                  mi->getInstruction()->getOperand(1),
+                  "",
+                  mi->getInstruction());
+              ni->dump();
+              mi->getInstruction()->eraseFromParent();
+              mi->root = (Value*)ni;
+            } else if (mi->getOpcodeName() == "mul") {
+              BinaryOperator* ni = BinaryOperator::Create(
+                  Instruction::Add,
+                  mi->getInstruction()->getOperand(0),
+                  mi->getInstruction()->getOperand(1),
+                  "",
+                  mi->getInstruction());
+              ni->dump();
+              mi->getInstruction()->eraseFromParent();
+              mi->root = (Value*)ni;
+            } 
+          }
+        }
       }
+
       // Clear Memory
       for (MyFunction* mf : allFunctions) {
         delete mf;
@@ -276,7 +300,7 @@ namespace {
       for (MyInstruction* g : globals) {
         delete g;
       }
-      return false;
+      return true;
     };
   };
 }
