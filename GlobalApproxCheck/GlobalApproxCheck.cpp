@@ -78,20 +78,20 @@ namespace {
       }
       for (MyFunction* f : allFunctions) {
         for (MyInstruction* mi : f->insts) {
-	  if (mi->getOpcodeName() == "load") {
-	    Instruction* vi = mi->getInstruction();
-	    User::op_iterator defI = vi->op_begin();
-	    if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
-	      globals.push_back(new MyInstruction(*defI));
-	    }
-	  } else if (mi->getOpcodeName() == "store") {
+       	  if (mi->getOpcodeName() == "load") {
+	           Instruction* vi = mi->getInstruction();
+	           User::op_iterator defI = vi->op_begin();
+	             if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
+	               globals.push_back(new MyInstruction(*defI));
+	             }
+          } else if (mi->getOpcodeName() == "store") {
             Instruction* vi = mi->getInstruction();
-	    User::op_iterator defI = vi->op_begin();
-	    defI++;
-	    if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
-	      globals.push_back(new MyInstruction(*defI));
-	    }
-	  }
+	          User::op_iterator defI = vi->op_begin();
+	          defI++;
+	          if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
+	            globals.push_back(new MyInstruction(*defI));
+	          }
+	        }
         }
       }
       for (MyFunction* f : allFunctions) {
@@ -100,7 +100,6 @@ namespace {
     }
 
     void findAddressUsageAndPropagateUp(MyFunction* mf) {
-      int storeCount = 0;
       for (MyInstruction* mi : mf->insts) {
         std::string oc = mi->getOpcodeName();
         if (oc == "load" || oc == "br") {
@@ -147,6 +146,28 @@ namespace {
             }
           }
           mi->traversePts--;
+        } else if (oc == "call") {
+          Value* vf = mi->getInstruction()->getOperand(mi->getInstruction()->getNumOperands() - 1);
+          Function* f = dyn_cast<Function>(vf);
+          int index = getFunctionIndex(allFunctions, f);
+          if (index == -1) {
+            // LLVM callgraph doesn't log llvm native functions (functions that start 
+            // llvm), so we have to just propagate the functions that we don't know.
+            mi->traversePts++;
+            mf->debug(mi);
+            mi->markAsNonApprox();
+            mf->propagateUp(mi);
+            mi->traversePts--;
+          } else {
+            MyFunction* mfc = allFunctions[index];
+            if (mfc->outside) {
+              mi->traversePts++;
+              mf->debug(mi);
+              mi->markAsNonApprox();
+              mf->propagateUp(mi);
+              mi->traversePts--;
+            }
+          }
         }
       }
     }

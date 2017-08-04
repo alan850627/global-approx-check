@@ -88,6 +88,9 @@ public:
   }
 
   void markRet() {
+		if (outside) {
+			return;
+		}
     for (MyInstruction* inst : insts) {
       if (inst->getOpcodeName() == "ret") {
         inst->traversePts++;
@@ -132,6 +135,9 @@ public:
   }
 
   void propagateFromParent(int arg_num) {
+    if (outside) {
+      return;
+    }
     MyInstruction* crit = args[arg_num];
     if (!isInstructionInVector(crit, critAddrVec)) {
       crit->traversePts++;
@@ -229,9 +235,16 @@ public:
     if (vi->getOpcodeName() == "call") {
       Value* vf = vi->getInstruction()->getOperand(vi->getInstruction()->getNumOperands() - 1); // the function is always the last element.
       assert(isa<Function>(vf));
-      MyFunction* mf = getMyFunctionFromVector(vf, childs);
-      mf->markRet();
-      return;
+      Function* f = dyn_cast<Function>(vf);
+      if (f->isIntrinsic()) {
+        // Do nothing, because we want it to continue propagating up.
+      } else {
+        MyFunction* mf = getMyFunctionFromVector(vf, childs);
+        if (!mf->outside) {
+          mf->markRet();
+          return;
+        }
+      } 
     }
     if (vi->getOpcodeName() == "alloca") {
       //TODO
