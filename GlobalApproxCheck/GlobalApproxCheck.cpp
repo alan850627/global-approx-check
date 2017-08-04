@@ -6,6 +6,7 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "MyTypes.h"
 #include "MyInstruction.h"
@@ -273,21 +274,25 @@ namespace {
                   Instruction::Mul, 
                   mi->getInstruction()->getOperand(0), 
                   mi->getInstruction()->getOperand(1),
-                  "",
-                  mi->getInstruction());
+                  "");
+              BasicBlock::iterator ii(mi->getInstruction());
+              ReplaceInstWithInst(
+                  mi->getInstruction()->getParent()->getInstList(),
+                  ii,
+                  ni);
               ni->dump();
-              mi->getInstruction()->eraseFromParent();
-              mi->root = (Value*)ni;
             } else if (mi->getOpcodeName() == "mul") {
               BinaryOperator* ni = BinaryOperator::Create(
                   Instruction::Add,
                   mi->getInstruction()->getOperand(0),
                   mi->getInstruction()->getOperand(1),
-                  "",
-                  mi->getInstruction());
+                  "");
+              BasicBlock::iterator ii(mi->getInstruction());
+              ReplaceInstWithInst(
+                  mi->getInstruction()->getParent()->getInstList(),
+                  ii,
+                  ni);
               ni->dump();
-              mi->getInstruction()->eraseFromParent();
-              mi->root = (Value*)ni;
             } 
           }
         }
