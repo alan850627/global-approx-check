@@ -25,6 +25,7 @@ namespace {
     // Global Variables
     std::vector<MyFunction*> allFunctions;
     std::vector<MyFunction*> stack;
+    std::vector<MyInstruction*> globals;
 
     /*
     * Checks whether the Function is in the vector or not.
@@ -34,6 +35,15 @@ namespace {
     int getFunctionIndex(std::vector<MyFunction*> v, Function* f) {
       for (int i = 0; i < v.size(); i++) {
         if (v[i]->root == f) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    int getInstructionIndex(std::vector<MyInstruction*> v, Value* vi) {
+      for (int i = 0; i < v.size(); i++) {
+        if(v[i]->root == vi) {
           return i;
         }
       }
@@ -50,8 +60,10 @@ namespace {
           MyFunction* mf = new MyFunction((*cgn)[i]->getFunction());
           allFunctions.push_back(mf);
           root->childs.push_back(mf);
-          mf->parents.push_back(root);
-          loadChildFunctions(mf, (*cgn)[i]);
+          if (!mf->outside) {
+            mf->parents.push_back(root);
+            loadChildFunctions(mf, (*cgn)[i]);
+          }
         } else {
           MyFunction* mf = allFunctions[j];
           root->childs.push_back(mf);
@@ -60,8 +72,34 @@ namespace {
       }
     }
 
+    void setupGlobals(Module &M) {
+      for (Module::global_iterator i = M.global_begin(); i != M.global_end(); i++) {
+        globals.push_back(new MyInstruction(&*i));
+      }
+      for (MyFunction* f : allFunctions) {
+        for (MyInstruction* mi : f->insts) {
+       	  if (mi->getOpcodeName() == "load") {
+	           Instruction* vi = mi->getInstruction();
+	           User::op_iterator defI = vi->op_begin();
+	             if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
+	               globals.push_back(new MyInstruction(*defI));
+	             }
+          } else if (mi->getOpcodeName() == "store") {
+            Instruction* vi = mi->getInstruction();
+	          User::op_iterator defI = vi->op_begin();
+	          defI++;
+	          if (getInstructionIndex(f->insts, *defI) == -1 && getInstructionIndex(globals, *defI) == -1) {
+	            globals.push_back(new MyInstruction(*defI));
+	          }
+	        }
+        }
+      }
+      for (MyFunction* f : allFunctions) {
+        f->globals = this->globals;
+      }
+    }
+
     void findAddressUsageAndPropagateUp(MyFunction* mf) {
-      int storeCount = 0;
       for (MyInstruction* mi : mf->insts) {
         std::string oc = mi->getOpcodeName();
         if (oc == "load" || oc == "br") {
@@ -74,7 +112,7 @@ namespace {
             // will be referenced as a pointer. At the same time, we also use alloca
             // instructions as function arguments, so marking them this will cause
             // propagateToParent function propagate approxable information.
-            if (d->getOpcodeName() != "alloca") {
+            if (d->getOpcodeName() != "alloca" && getInstructionIndex(globals, d->root) == -1) {
               d->traversePts++;
               mf->debug(d);
               d->markAsNonApprox();
@@ -89,7 +127,7 @@ namespace {
           Instruction* instr = mi->getInstruction();
           for (User::op_iterator i = instr->op_begin() + 1; i != instr->op_end(); i++) {
             MyInstruction* nmi = mf->getMyInstruction(*i);
-            if (nmi != 0 && !isa<GlobalVariable>(*i)) {
+            if (nmi != 0 && getInstructionIndex(globals, nmi->root) == -1) {
               // We don't want to mark alloca instructions unless they are "critical".
               // Since for each "use" (aka load) instruction, the alloca instructions
               // will be referenced as a pointer. At the same time, we also use alloca
@@ -108,6 +146,28 @@ namespace {
             }
           }
           mi->traversePts--;
+        } else if (oc == "call") {
+          Value* vf = mi->getInstruction()->getOperand(mi->getInstruction()->getNumOperands() - 1);
+          Function* f = dyn_cast<Function>(vf);
+          int index = getFunctionIndex(allFunctions, f);
+          if (index == -1) {
+            // LLVM callgraph doesn't log llvm native functions (functions that start 
+            // llvm), so we have to just propagate the functions that we don't know.
+            mi->traversePts++;
+            mf->debug(mi);
+            mi->markAsNonApprox();
+            mf->propagateUp(mi);
+            mi->traversePts--;
+          } else {
+            MyFunction* mfc = allFunctions[index];
+            if (mfc->outside) {
+              mi->traversePts++;
+              mf->debug(mi);
+              mi->markAsNonApprox();
+              mf->propagateUp(mi);
+              mi->traversePts--;
+            }
+          }
         }
       }
     }
@@ -143,10 +203,12 @@ namespace {
 
     void findAllUsesOfGlobalVariable(MyFunction* mf) {
       for (MyInstruction* mi : mf->globals) {
-        mi->traversePts++;
-        mf->debug(mi);
-        mf->propagateGlobalsDown(mi);
-        mi->traversePts--;
+        if (mi->approxStatus == ApproxStatus::nonApproxable) {
+          mi->traversePts++;
+          mf->debug(mi);
+          mf->propagateGlobalsDown(mi);
+          mi->traversePts--;
+        }
       }
     }
 
@@ -157,11 +219,13 @@ namespace {
       stack.push_back(mf);
       findAddressUsageAndPropagateUp(mf);
       findAddressBeingUsedAsData(mf);
+      findAllUsesOfGlobalVariable(mf);
       for (MyFunction* child : mf->childs) {
         analyzeFunction(child);
       }
       findUnpropagatedInstructionsAndPropagateUp(mf);
       findAddressBeingUsedAsData(mf);
+      findAllUsesOfGlobalVariable(mf);
       mf->propagateToParent();
       stack.pop_back();
     }
@@ -191,6 +255,7 @@ namespace {
 
       // Get info out of callgraph.
       loadChildFunctions(root, cgn);
+      setupGlobals(M);
 
       // GLOBAL-APPROX-CHECK ALGORITHM HERE
       analyzeFunction(root);
@@ -207,6 +272,9 @@ namespace {
       // Clear Memory
       for (MyFunction* mf : allFunctions) {
         delete mf;
+      }
+      for (MyInstruction* g : globals) {
+        delete g;
       }
       return false;
     };

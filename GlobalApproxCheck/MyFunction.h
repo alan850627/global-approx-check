@@ -26,6 +26,7 @@ public:
   std::vector<MyFunction*> childs;
   std::vector<MyFunction*> parents;
   std::string name;
+  bool outside;
 
   MyFunction(Function* fun) {
     root = fun;
@@ -34,8 +35,17 @@ public:
     parents.clear();
     critAddrVec.clear();
     globals.clear();
-    initializeInstructions();
-    initializeArguments();
+
+    inst_iterator ii = inst_begin(*root);
+    if ((&*ii) == 0) {
+      outside = true;
+      args.clear();
+      insts.clear();
+    } else {
+      outside = false;
+      initializeInstructions();
+      initializeArguments();
+    }
   }
 
   MyFunction(const MyFunction& copy_from) {
@@ -47,6 +57,7 @@ public:
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
+    outside = copy_from.outside;
   }
 
   MyFunction& operator=(const MyFunction& copy_from) {
@@ -58,14 +69,12 @@ public:
     insts = copy_from.insts;
     childs = copy_from.childs;
     parents = copy_from.parents;
+    outside = copy_from.outside;
     return *this;
   }
 
   ~MyFunction() {
     for (MyInstruction* inst : insts) {
-      delete inst;
-    }
-    for (MyInstruction* inst : globals) {
       delete inst;
     }
   }
@@ -79,6 +88,9 @@ public:
   }
 
   void markRet() {
+		if (outside) {
+			return;
+		}
     for (MyInstruction* inst : insts) {
       if (inst->getOpcodeName() == "ret") {
         inst->traversePts++;
@@ -123,6 +135,9 @@ public:
   }
 
   void propagateFromParent(int arg_num) {
+    if (outside) {
+      return;
+    }
     MyInstruction* crit = args[arg_num];
     if (!isInstructionInVector(crit, critAddrVec)) {
       crit->traversePts++;
@@ -170,17 +185,11 @@ public:
     std::string opcode = mi->getOpcodeName();
     if (opcode == "load") {
       User::op_iterator defI = vi->op_begin();
-      if (getMyInstruction(*defI) == 0) {
-        addGlobalVariable(*defI);
-      }
       return getMyInstruction(*defI);
     }
     else if (opcode == "store") {
       User::op_iterator defI = vi->op_begin();
       defI++;
-      if (getMyInstruction(*defI) == 0) {
-        addGlobalVariable(*defI);
-      }
       return getMyInstruction(*defI);
     }
     return 0;
@@ -195,11 +204,8 @@ public:
     }
     for (User::op_iterator i = instr->op_begin(); i != instr->op_end(); i++) {
       MyInstruction* nmi = getMyInstruction(*i);
-      if (nmi != 0 && !isa<GlobalVariable>(*i)) {
+      if (nmi != 0) {
         vec.push_back(nmi);
-      } else if (isa<GlobalVariable>(*i)) {
-        // Might be a global variable
-        addGlobalVariable(*i);
       }
     }
     return vec;
@@ -229,12 +235,22 @@ public:
     if (vi->getOpcodeName() == "call") {
       Value* vf = vi->getInstruction()->getOperand(vi->getInstruction()->getNumOperands() - 1); // the function is always the last element.
       assert(isa<Function>(vf));
-      MyFunction* mf = getMyFunctionFromVector(vf, childs);
-      mf->markRet();
-      return;
+      Function* f = dyn_cast<Function>(vf);
+      if (f->isIntrinsic()) {
+        // Do nothing, because we want it to continue propagating up.
+      } else {
+        MyFunction* mf = getMyFunctionFromVector(vf, childs);
+        if (!mf->outside) {
+          mf->markRet();
+          return;
+        }
+      } 
     }
     if (vi->getOpcodeName() == "alloca") {
       //TODO
+      return;
+    }
+    if (isInstructionInVector(vi, globals)) {
       return;
     }
     if (vi->getOpcodeName() == "load") {
@@ -245,7 +261,7 @@ public:
       // will be referenced as a pointer. At the same time, we also use alloca
       // instructions as function arguments, so marking them this will cause
       // propagateToParent function propagate approxable information.
-      if (crit->getOpcodeName() == "alloca") {
+      if (crit->getOpcodeName() == "alloca" || isInstructionInVector(crit, globals)) {
         crit->traversePts++;
         debug(crit);
         crit->markAsNonApprox();
@@ -269,7 +285,7 @@ public:
       // will be referenced as a pointer. At the same time, we also use alloca
       // instructions as function arguments, so marking them this will cause
       // propagateToParent function propagate approxable information.
-      if (mi->getOpcodeName() != "alloca") {
+      if (mi->getOpcodeName() != "alloca" && !isInstructionInVector(mi, globals)) {
         mi->traversePts++;
         debug(mi);
         mi->markAsNonApprox();
@@ -295,21 +311,31 @@ public:
         // 2) Get the function
         // 3) Call that function's propagateDown
         Value* vf = use->getInstruction()->getOperand(use->getInstruction()->getNumOperands() - 1); // the function is always the last element.
-        MyFunction* mf = getMyFunctionFromVector(vf, childs);
-        for (int i = 0; i < use->getInstruction()->getNumOperands(); i++) {
-          Value* v = use->getInstruction()->getOperand(i);
-          if (isa<Instruction>(v)) {
-            Instruction* ii = dyn_cast<Instruction>(v);
-            if (ii == vi->root) {
-              //Found the argument dependency
-              mf->propagateFromParent(i);
+        assert(isa<Function>(vf));
+        Function* f = dyn_cast<Function>(vf);
+        if (f->isIntrinsic()) {
+          propagateDown(use);
+        } else {
+          MyFunction* mf = getMyFunctionFromVector(vf, childs);
+          if (mf->outside) {
+            propagateDown(use);
+          } else {
+            for (int i = 0; i < use->getInstruction()->getNumOperands(); i++) {
+              Value* v = use->getInstruction()->getOperand(i);
+              if (isa<Instruction>(v)) {
+                Instruction* ii = dyn_cast<Instruction>(v);
+                if (ii == vi->root) {
+                  //Found the argument dependency
+                  mf->propagateFromParent(i);
+                }
+              }
             }
           }
-        }
+        } 
       } else if (use->getOpcodeName() == "store") {
         MyInstruction* adddep = getAddressDependency(use);
         bool isCritical;
-        if (isa<GlobalVariable>(adddep->root) || adddep->getOpcodeName() == "alloca") {
+        if (isInstructionInVector(adddep, globals) || adddep->getOpcodeName() == "alloca") {
           isCritical = isInstructionInVector(adddep, critAddrVec);
         } else {
           isCritical = isInstructionInVectorDeep(adddep, critAddrVec);
@@ -385,7 +411,7 @@ public:
     }
     errs() << " *Critical Addresses:\n";
     for (MyInstruction* crit : critAddrVec) {
-      if (isa<GlobalVariable>(crit->root)) {
+      if (isInstructionInVector(crit, globals)) {
         errs() << "  ";
       }
       crit->print();
@@ -473,6 +499,9 @@ private:
       //TODO
       return;
     }
+    if (isInstructionInVector(vi, globals)) {
+      return;
+    }
     if (vi->getOpcodeName() == "load") {
       //Found some "address" stored in memory
       return;
@@ -489,7 +518,7 @@ private:
       // will be referenced as a pointer. At the same time, we also use alloca
       // instructions as function arguments, so marking them this will cause
       // propagateToParent function propagate approxable information.
-      if (mi->getOpcodeName() != "alloca") {
+      if (mi->getOpcodeName() != "alloca" && !isInstructionInVector(mi, globals)) {
         mi->traversePts++;
         debug(mi);
         mi->markAsNonApprox();
